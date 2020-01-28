@@ -1,6 +1,7 @@
 /*
  * This is the Changeset library copied from the old Etherpad with some modifications to use it in node.js
  * Can be found in https://github.com/ether/pad/blob/master/infrastructure/ace/www/easysync2.js
+ * 这是Changeset库从老的Etherpad复制出来，并且进行了一些修改以便于用于node.js
  */
 
 /**
@@ -29,10 +30,13 @@ var AttributePool = require("./AttributePool");
 
 /**
  * ==================== General Util Functions =======================
+ * 通用工具方法
  */
 
 /**
  * This method is called whenever there is an error in the sync process
+ * 无论任何时候，只要在处理同步时出现异常，这个方法将会被调用
+ * 
  * @param msg {string} Just some message
  */
 exports.error = function error(msg) {
@@ -44,6 +48,9 @@ exports.error = function error(msg) {
 /**
  * This method is used for assertions with Messages
  * if assert fails, the error function is called.
+ * 
+ * 这个方法用于断言信息，如果断言失败，错误方法将被调用
+ * 
  * @param b {boolean} assertion condition
  * @param msgParts {string} error to be passed if it fails
  */
@@ -56,6 +63,7 @@ exports.assert = function assert(b, msgParts) {
 
 /**
  * Parses a number from string base 36
+ * 解析一个数字根据base36算法
  * @param str {string} string of the number in base 36
  * @returns {int} number
  */
@@ -65,6 +73,7 @@ exports.parseNum = function (str) {
 
 /**
  * Writes a number in base 36 and puts it in a string
+ * 转换一个数字为base36的字符串
  * @param num {int} number
  * @returns {string} string
  */
@@ -73,7 +82,10 @@ exports.numToString = function (num) {
 };
 
 /**
- * Converts stuff before $ to base 10
+ * Converts stuff before $ to base 10(注释错误)
+ * 
+ * $前的文字替换成 base 36 字符串
+ * 
  * @obsolete not really used anywhere??
  * @param cs {string} the string
  * @return integer
@@ -90,11 +102,17 @@ exports.toBaseTen = function (cs) {
 
 /**
  * ==================== Changeset Functions =======================
+ * Changeset方法
  */
 
 /**
  * returns the required length of the text before changeset
  * can be applied
+ * 
+ * 返回应用changeset所需的文本长度
+ * 
+ * 返回
+ * 
  * @param cs {string} String representation of the Changeset
  */
 exports.oldLen = function (cs) {
@@ -103,6 +121,9 @@ exports.oldLen = function (cs) {
 
 /**
  * returns the length of the text after changeset is applied
+ * 
+ * 返回changeset被应用之后的文本长度
+ * 
  * @param cs {string} String representation of the Changeset
  */
 exports.newLen = function (cs) {
@@ -111,8 +132,13 @@ exports.newLen = function (cs) {
 
 /**
  * this function creates an iterator which decodes string changeset operations
+ * 
+ * 这个方法创建一个迭代器，用于解码字符串Changeset的操作
+ * 
  * @param opsStr {string} String encoding of the change operations to be performed
+ * 编码成字符串的被执行的变更操作
  * @param optStartIndex {int} from where in the string should the iterator start
+ * 从什么地方字符串应该被迭代开始
  * @return {Op} type object iterator
  */
 exports.opIterator = function (opsStr, optStartIndex) {
@@ -167,6 +193,7 @@ exports.opIterator = function (opsStr, optStartIndex) {
 
 /**
  * Cleans an Op object
+ * 清空一个op对象
  * @param {Op} object to be cleared
  */
 exports.clearOp = function (op) {
@@ -178,6 +205,7 @@ exports.clearOp = function (op) {
 
 /**
  * Creates a new Op object
+ * 创建一个新的op对象
  * @param optOpcode the type operation of the Op object
  */
 exports.newOp = function (optOpcode) {
@@ -191,6 +219,7 @@ exports.newOp = function (optOpcode) {
 
 /**
  * Clones an Op
+ * 克隆一个op对象
  * @param op Op to be cloned
  */
 exports.cloneOp = function (op) {
@@ -204,6 +233,7 @@ exports.cloneOp = function (op) {
 
 /**
  * Copies op1 to op2
+ * 将op1复制到op2
  * @param op1 src Op
  * @param op2 dest Op
  */
@@ -216,6 +246,7 @@ exports.copyOp = function (op1, op2) {
 
 /**
  * Writes the Op in a string the way that changesets need it
+ * 写入一个op对象到字符串，该字符串用于放入changeset中
  */
 exports.opString = function (op) {
   // just for debugging
@@ -227,6 +258,7 @@ exports.opString = function (op) {
 
 /**
  * Used just for debugging
+ * 把op打印出来，用于调试
  */
 exports.stringOp = function (str) {
   // just for debugging
@@ -235,6 +267,9 @@ exports.stringOp = function (str) {
 
 /**
  * Used to check if a Changeset if valid
+ * 
+ * 用于检查一个changeset是否是合法的
+ * 
  * @param cs {Changeset} Changeset to be checked
  */
 exports.checkRep = function (cs) {
@@ -289,11 +324,15 @@ exports.checkRep = function (cs) {
 
 /**
  * ==================== Util Functions =======================
+ * 工具方法
  */
 
 /**
  * creates an object that allows you to append operations (type Op) and also
  * compresses them if possible
+ * 
+ * 创建一个对象允许你添加操作（op类型）和同时压缩他们，如果可能的话
+ * 
  */
 exports.smartOpAssembler = function () {
   // Like opAssembler but able to produce conforming exportss
@@ -310,11 +349,17 @@ exports.smartOpAssembler = function () {
   var lastOpcode = '';
   var lengthChange = 0;
 
+  /**
+   * 输出keeps中的op操
+   */
   function flushKeeps() {
     assem.append(keepAssem.toString());
     keepAssem.clear();
   }
 
+  /**
+   * 输出plus和minus中的op操作
+   */
   function flushPlusMinus() {
     assem.append(minusAssem.toString());
     minusAssem.clear();
@@ -322,6 +367,10 @@ exports.smartOpAssembler = function () {
     plusAssem.clear();
   }
 
+  /**
+   * 添加op操作
+   * @param {op操作} op 
+   */
   function append(op) {
     if (!op.opcode) return;
     if (!op.chars) return;
@@ -397,12 +446,15 @@ exports.smartOpAssembler = function () {
   };
 };
 
-
+/**
+ * 合并Op的汇编器
+ */
 exports.mergingOpAssembler = function () {
   // This assembler can be used in production; it efficiently
   // merges consecutive operations that are mergeable, ignores
   // no-ops, and drops final pure "keeps".  It does not re-order
   // operations.
+  // 这个汇编器可以用于生产环境。它有效的合并连续的可合并的操作，忽略无操作，和删除保留操作。他不会对操作进行重排序。
   var assem = exports.opAssembler();
   var bufOp = exports.newOp();
 
@@ -410,6 +462,8 @@ exports.mergingOpAssembler = function () {
   // but if we get [xxx\n,yyy,zzz\n], that merges to [xxx\nyyyzzz\n].
   // This variable stores the length of yyy and any other newline-less
   // ops immediately after it.
+  // 如果我们获得，例如 插入[xxx\n,yyy]，这个不会合并，但是如果我们获得[xxx\n,yyy,zzz\n]，会合并为[xxx\nyyyzzz\n]。
+  // 这个变量存储yyy的长度和紧随其后的任何其他无换行操作
   var bufOpAdditionalCharsAfterNewline = 0;
 
   function flush(isEndDocument) {
@@ -473,7 +527,9 @@ exports.mergingOpAssembler = function () {
 };
 
 
-
+/**
+ * 将一个op对象集合成字符串数组，并最后格式化成字符串
+ */
 exports.opAssembler = function () {
   var pieces = [];
   // this function allows op to be mutated later (doesn't keep a ref)
@@ -503,12 +559,20 @@ exports.opAssembler = function () {
 
 /**
  * A custom made String Iterator
+ * 一个自定义的字符串迭代器
  * @param str {string} String to be iterated over
  */
 exports.stringIterator = function (str) {
+
   var curIndex = 0;
+
   // newLines is the number of \n between curIndex and str.length
+  // newLines 是换行符的数量
   var newLines = str.split("\n").length - 1
+
+  /**
+   * 
+   */
   function getnewLines(){
     return newLines
   }
@@ -517,25 +581,41 @@ exports.stringIterator = function (str) {
     exports.assert(n <= remaining(), "!(", n, " <= ", remaining(), ")");
   }
 
+  /**
+   * 获取n个字符，并前进
+   * @param {获取字符数量} n 
+   */
   function take(n) {
     assertRemaining(n);
     var s = str.substr(curIndex, n);
+    // 计算剩余换行符的数量
     newLines -= s.split("\n").length - 1
     curIndex += n;
     return s;
   }
 
+  /**
+   * 获取n个字符
+   * @param {获取字符数量} n 
+   */
   function peek(n) {
     assertRemaining(n);
     var s = str.substr(curIndex, n);
     return s;
   }
 
+  /**
+   * 跳过n个字符
+   * @param {字符数量} n 
+   */
   function skip(n) {
     assertRemaining(n);
     curIndex += n;
   }
 
+  /**
+   * 计算剩余字符数量
+   */
   function remaining() {
     return str.length - curIndex;
   }
@@ -550,6 +630,7 @@ exports.stringIterator = function (str) {
 
 /**
  * A custom made StringBuffer
+ * 一个自定义StringBuffer，字符串汇编器
  */
 exports.stringAssembler = function () {
   var pieces = [];
@@ -571,6 +652,9 @@ exports.stringAssembler = function () {
  * This class allows to iterate and modify texts which have several lines
  * It is used for applying Changesets on arrays of lines
  * Note from prev docs: "lines" need not be an array as long as it supports certain calls (lines_foo inside).
+ * 这个类允许取迭代和修改多行文本。
+ * 用于应用Changesets在行数足上。
+ * 来自prev文档的注意:“行”不需要是一个数组，只要它支持某些调用(lines_foo里面)。
  */
 exports.textLinesMutator = function (lines) {
   // Mutates lines, an array of strings, in place.
@@ -864,27 +948,41 @@ exports.applyZip = function (in1, idx1, in2, idx2, func) {
 
 /**
  * Unpacks a string encoded Changeset into a proper Changeset object
+ * 
+ * 解压一个被编码为字符串的Changeset到一个完整的Changeset对象
+ * 
  * @params cs {string} String encoded Changeset
  * @returns {Changeset} a Changeset class
  */
 exports.unpack = function (cs) {
+  // 样例Z:d5>2|7=bi=1m*0+2$df
+  // $后边为输入的文字
+  // >2是新增了2个文字，+2也是新增了2个文字
+  // 
   var headerRegex = /Z:([0-9a-z]+)([><])([0-9a-z]+)|/;
   var headerMatch = headerRegex.exec(cs);
   if ((!headerMatch) || (!headerMatch[0])) {
     exports.error("Not a exports: " + cs);
   }
+  // headerMatch[1] = d5 = 473
   var oldLen = exports.parseNum(headerMatch[1]);
+
+  // headerMatch[2] = >
   var changeSign = (headerMatch[2] == '>') ? 1 : -1;
+
+  // headerMatch[3] = 2
   var changeMag = exports.parseNum(headerMatch[3]);
-  var newLen = oldLen + changeSign * changeMag;
-  var opsStart = headerMatch[0].length;
-  var opsEnd = cs.indexOf("$");
+  var newLen = oldLen + changeSign * changeMag; // = 475
+
+  // headerMatch[0] = Z:d5>2
+  var opsStart = headerMatch[0].length; // 6
+  var opsEnd = cs.indexOf("$"); // 17
   if (opsEnd < 0) opsEnd = cs.length;
   return {
     oldLen: oldLen,
     newLen: newLen,
-    ops: cs.substring(opsStart, opsEnd),
-    charBank: cs.substring(opsEnd + 1)
+    ops: cs.substring(opsStart, opsEnd), // |7=bi=1m*0+2
+    charBank: cs.substring(opsEnd + 1) // df
   };
 };
 

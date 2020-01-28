@@ -23,6 +23,7 @@ var jsonableList = ["pool"];
 
 /**
  * Copied from the Etherpad source code. It converts Windows line breaks to Unix line breaks and convert Tabs to spaces
+ * 从Etherpad源码复制，转换windows换行符为unix换行符，转换tab为空格
  * @param txt
  */
 exports.cleanText = function (txt) {
