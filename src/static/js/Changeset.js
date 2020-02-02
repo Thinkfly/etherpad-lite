@@ -142,7 +142,8 @@ exports.newLen = function (cs) {
  * @return {Op} type object iterator
  */
 exports.opIterator = function (opsStr, optStartIndex) {
-  //print(opsStr);
+  console.info("opsStr:" + opsStr + ", optStartIndex:" + optStartIndex);
+  // 样例：|7=bi*0+3
   var regex = /((?:\*[0-9a-z]+)*)(?:\|([0-9a-z]+))?([-+=])([0-9a-z]+)|\?|/g;
   var startIndex = (optStartIndex || 0);
   var curIndex = startIndex;
@@ -157,7 +158,7 @@ exports.opIterator = function (opsStr, optStartIndex) {
     if (result[0] == '?') {
       exports.error("Hit error opcode in op stream");
     }
-
+    // console.info("nextRegexMatch-result:" + result);
     return result;
   }
   var regexResult = nextRegexMatch();
@@ -165,7 +166,12 @@ exports.opIterator = function (opsStr, optStartIndex) {
 
   function next(optObj) {
     var op = (optObj || obj);
+    console.info("next-regexResult[0]:" + regexResult[0]);
     if (regexResult[0]) {
+      console.info("next-regexResult[1]:" + regexResult[1]);
+      console.info("next-regexResult[2]:" + regexResult[2]);
+      console.info("next-regexResult[3]:" + regexResult[3]);
+      console.info("next-regexResult[4]:" + regexResult[4]);
       op.attribs = regexResult[1];
       op.lines = exports.parseNum(regexResult[2] || 0);
       op.opcode = regexResult[3];
@@ -174,6 +180,7 @@ exports.opIterator = function (opsStr, optStartIndex) {
     } else {
       exports.clearOp(op);
     }
+    console.info("next-op:" + JSON.stringify(op));
     return op;
   }
 
@@ -652,7 +659,7 @@ exports.stringAssembler = function () {
  * This class allows to iterate and modify texts which have several lines
  * It is used for applying Changesets on arrays of lines
  * Note from prev docs: "lines" need not be an array as long as it supports certain calls (lines_foo inside).
- * 这个类允许取迭代和修改多行文本。
+ * 这个类允许迭代和修改多行文本。
  * 用于应用Changesets在行数足上。
  * 来自prev文档的注意:“行”不需要是一个数组，只要它支持某些调用(lines_foo里面)。
  */
@@ -665,13 +672,20 @@ exports.textLinesMutator = function (lines) {
   // is not actually a newline, but for the purposes of N and L values,
   // the caller should pretend it is, and for things to work right in that case, the input
   // to insert() should be a single line with no newlines.
+  // 在适当的位置突变行(字符串数组)。
+  // 对于换行，变异操作具有与导出操作相同的约束，但其他附加约束
+  // （例如：ins/del顺序，禁止无操作，不可合并，最后的换行)。
+  // 可用于变异,每个字符串的最后一个字符的字符串列表实际上不是一个换行符,但为了N和L值,
+  // 调用者应该假装存在,并且为了让所有事情在这种情况下运行正常,插入操作应该是单独一行并且没有换行。
   var curSplice = [0, 0];
   var inSplice = false;
   // position in document after curSplice is applied:
+  // 在curSplice之后的文档位置被应用:
   var curLine = 0,
       curCol = 0;
   // invariant: if (inSplice) then (curLine is in curSplice[0] + curSplice.length - {2,3}) &&
   //            curLine >= curSplice[0]
+  // 不变的：如果 inSplice=true 则
   // invariant: if (inSplice && (curLine >= curSplice[0] + curSplice.length - 2)) then
   //            curCol == 0
 
@@ -912,6 +926,7 @@ exports.textLinesMutator = function (lines) {
 
 /**
  * Function allowing iterating over two Op strings.
+ * 函数允许在两个op字符串之间迭代
  * @params in1 {string} first Op string
  * @params idx1 {int} integer where 1st iterator should start
  * @params in2 {string} second Op string

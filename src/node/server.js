@@ -59,7 +59,7 @@ npm.load({}, function() {
   var hooks = require("ep_etherpad-lite/static/js/pluginfw/hooks");
   hooks.plugins = plugins;
 
-  db.init()
+    db.init()
     .then(plugins.update)
     .then(function() {
       console.info("Installed plugins: " + plugins.formatPluginsWithVersion());

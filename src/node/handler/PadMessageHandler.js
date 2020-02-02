@@ -47,17 +47,21 @@ const nodeify = require("nodeify");
  *   readonly = Wether the client has only read access (true) or read/write access (false)
  *   rev = That last revision that was send to this client
  *   author = the author name of this session
+ *
+ * 一个保存了关于session信息的数组，
  */
 var sessioninfos = {};
 exports.sessioninfos = sessioninfos;
 
 // Measure total amount of users
+// 测量总用户数
 stats.gauge('totalUsers', function() {
   return Object.keys(socketio.sockets.sockets).length;
 });
 
 /**
  * A changeset queue per pad that is processed by handleUserChanges()
+ * 每一个pad有一个changeset队列，被handleUserChanges处理
  */
 var padChannels = new channels.channels(function(data, callback) {
   return nodeify(handleUserChanges(data), callback);
@@ -65,11 +69,13 @@ var padChannels = new channels.channels(function(data, callback) {
 
 /**
  * Saves the Socket class we need to send and receive data from the client
+ * 保存Socket类我们需要发送和接收数据从客户端
  */
 let socketio;
 
 /**
  * This Method is called by server.js to tell the message handler on which socket it should send
+ * 这个方法被server.js调用，用于高速消息处理器，哪个socket应该发送数据
  * @param socket_io The Socket
  */
 exports.setSocketIO = function(socket_io)
@@ -79,6 +85,7 @@ exports.setSocketIO = function(socket_io)
 
 /**
  * Handles the connection of a new user
+ * 处理一个新用户的连接
  * @param client the new client
  */
 exports.handleConnect = function(client)
@@ -86,11 +93,13 @@ exports.handleConnect = function(client)
   stats.meter('connects').mark();
 
   // Initalize sessioninfos for this new session
+  // 为新session初始化session信息
   sessioninfos[client.id]={};
 }
 
 /**
  * Kicks all sessions from a pad
+ * 踢出所有session从一个pad
  * @param client the new client
  */
 exports.kickSessionsFromPad = function(padID)
@@ -108,6 +117,7 @@ exports.kickSessionsFromPad = function(padID)
 
 /**
  * Handles the disconnection of a user
+ * 处理一个用户断开连接
  * @param client the client that leaves
  */
 exports.handleDisconnect = async function(client)
@@ -147,9 +157,11 @@ exports.handleDisconnect = async function(client)
     };
 
     // Go through all user that are still on the pad, and send them the USER_LEAVE message
+    // 给所有其他没离开的用户发送用户离开消息
     client.broadcast.to(session.padId).json.send(messageToTheOtherUsers);
 
     // Allow plugins to hook into users leaving the pad
+    // 允许插件hook该消息
     hooks.callAll("userLeave", session);
   }
 
@@ -159,6 +171,7 @@ exports.handleDisconnect = async function(client)
 
 /**
  * Handles a message from a user
+ * 从一个用户处理一条消息
  * @param client the client that send this message
  * @param message the message from the client
  */
@@ -179,6 +192,10 @@ exports.handleMessage = async function(client, message)
     return;
   }
 
+  /**
+   * 处理消息hook
+   * @returns {Promise<boolean>}
+   */
   async function handleMessageHook() {
     // Allow plugins to bypass the readonly message blocker
     let messages = await hooks.aCallAll("handleMessageSecurity", { client: client, message: message });
@@ -205,13 +222,20 @@ exports.handleMessage = async function(client, message)
     return dropMessage;
   }
 
+  /**
+   * 最终处理消息方法
+   */
   function finalHandler() {
+    console.info("finalHandler:" + JSON.stringify(message));
     // Check what type of message we get and delegate to the other methods
     if (message.type == "CLIENT_READY") {
+      // 客户端初始化
       handleClientReady(client, message);
     } else if (message.type == "CHANGESET_REQ") {
+      // 处理时间滑块
       handleChangesetRequest(client, message);
     } else if(message.type == "COLLABROOM") {
+      
       if (thisSession.readonly) {
         messageLogger.warn("Dropped message, COLLABROOM for readonly pad");
       } else if (message.data.type == "USER_CHANGES") {
@@ -864,6 +888,10 @@ function createSessionInfo(client, message)
 /**
  * Handles a CLIENT_READY. A CLIENT_READY is the first message from the client to the server. The Client sends his token
  * and the pad it wants to enter. The Server answers with the inital values (clientVars) of the pad
+ *
+ * 处理CLIENT_READY消息。一个CLIENT_READY消息是第一个消息从客户端到服务端。客户端发送他的token和想加入的pad。
+ * 服务端答复pad的初始化值（客户端变量）
+ *
  * @param client the client that send this message
  * @param message the message from the client
  */
@@ -914,20 +942,25 @@ async function handleClientReady(client, message)
   let author = statusObject.authorID;
 
   // get all authordata of this new user
+  // 获取该用户的所有作者数据
   let value = await authorManager.getAuthor(author);
   let authorColorId = value.colorId;
   let authorName = value.name;
 
   // load the pad-object from the database
+  // 从数据库获取pad对象
   let pad = await padManager.getPad(padIds.padId);
 
   // these db requests all need the pad object (timestamp of latest revision, author data)
+  // 获取pad对象的需要的所有信息（最后版本的时间戳，作者数据）
   let authors = pad.getAllAuthors();
 
   // get timestamp of latest revision needed for timeslider
+  // 获取最后版本的时间戳用于时间滑块
   let currentTime = await pad.getRevisionDate(pad.getHeadRevisionNumber());
 
   // get all author data out of the database (in parallel)
+  // 并行获取所有作者数据
   let historicalAuthorData = {};
   await Promise.all(authors.map(authorId => {
     return authorManager.getAuthor(authorId).then(author => {
@@ -1212,6 +1245,7 @@ async function handleClientReady(client, message)
 
 /**
  * Handles a request for a rough changeset, the timeslider client needs it
+ * 处理一个粗略changeset，时间滑块客户端需要它
  */
 async function handleChangesetRequest(client, message)
 {
