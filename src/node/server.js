@@ -3,6 +3,10 @@
  * This module is started with bin/run.sh. It sets up a Express HTTP and a Socket.IO Server.
  * Static file Requests are answered directly from this module, Socket.IO messages are passed
  * to MessageHandler and minfied requests are passed to minified.
+ * 
+ * 这个模块被bin/run.sh启动。启动了一个快速http和一个Socket.IO服务器。
+ * 静态文件请求直接被这个模块应答，Socket.IO的消息被专递到MessageHandler，
+ * and minfied requests are passed to minified.不知道是什么
  */
 
 /*
@@ -30,16 +34,19 @@ log4js.replaceConsole();
 /*
  * early check for version compatibility before calling
  * any modules that require newer versions of NodeJS
+ * 前期检查兼容版本号，通知其他模块需要最新的nodejs版本
  */
 NodeVersion.enforceMinNodeVersion('8.9.0');
 
 /*
  * Etherpad 1.8.3 will require at least nodejs 10.13.0.
+ * Etherpad 1.8.3 将需要最小10.13.0的nodejs版本
  */
 NodeVersion.checkDeprecationStatus('10.13.0', '1.8.3');
 
 /*
  * start up stats counting system
+ * 启动统计计数系统
  */
 var stats = require('./stats');
 stats.gauge('memoryUsage', function() {
@@ -49,6 +56,7 @@ stats.gauge('memoryUsage', function() {
 /*
  * no use of let or await here because it would cause startup
  * to fail completely on very early versions of NodeJS
+ * 没有使用let 或 await 这里是因为它会在非常早期版本的nodeJS引起启动失败
  */
 var npm = require("npm/lib/npm.js");
 
@@ -67,9 +75,11 @@ npm.load({}, function() {
       console.debug("Installed hooks:\n" + plugins.formatHooks());
 
       // Call loadSettings hook
+      // 调用loadSettings hook
       hooks.aCallAll("loadSettings", { settings: settings });
 
       // initalize the http server
+      // 初始化http服务器
       hooks.callAll("createServer", {});
     })
     .catch(function(e) {

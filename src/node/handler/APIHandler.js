@@ -1,5 +1,5 @@
-/**
  * The API Handler handles all API http requests
+ * http请求的API处理器
  */
 
 /*
@@ -42,6 +42,7 @@ try {
 }
 
 // a list of all functions
+// 所有方法列表
 var version = {};
 
 version["1"] = Object.assign({},
@@ -137,9 +138,11 @@ version["1.2.13"] = Object.assign({}, version["1.2.12"],
 );
 
 // set the latest available API version here
+// 设置最后可用API版本号
 exports.latestApiVersion = '1.2.13';
 
 // exports the versions so it can be used by the new Swagger endpoint
+// 导出版本号以便可以被Swagger端点使用
 exports.version = version;
 
 /**
