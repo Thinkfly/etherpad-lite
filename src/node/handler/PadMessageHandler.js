@@ -1040,7 +1040,7 @@ async function handleClientReady(client, message)
     var changesets = {};
 
     var startNum = message.client_rev + 1;// 客户端的修订号+1
-    var endNum = pad.getHeadRevisionNumber() + 1;//
+    var endNum = pad.getHeadRevisionNumber() + 1;//最新的修订号+1
 
     var headNum = pad.getHeadRevisionNumber();
 
@@ -1052,6 +1052,7 @@ async function handleClientReady(client, message)
       startNum = 0;
     }
 
+    // 将需要的修订号放入数组并初始化
     for (let r = startNum; r < endNum; r++) {
       revisionsNeeded.push(r);
       changesets[r] = {};
