@@ -226,7 +226,7 @@ exports.handleMessage = async function(client, message)
    * 最终处理消息方法
    */
   function finalHandler() {
-    console.info("finalHandler:" + JSON.stringify(message));
+    console.info("finalHandler:" + JSON.stringify(message.type));
     // Check what type of message we get and delegate to the other methods
     if (message.type == "CLIENT_READY") {
       // 客户端初始化
@@ -926,7 +926,7 @@ async function handleClientReady(client, message)
   // check permissions
 
   // Note: message.sessionID is an entierly different kind of
-  // session from the sessions we use here! Beware!
+  // session from the sessions we use here! Beware
   // FIXME: Call our "sessions" "connections".
   // FIXME: Use a hook instead
   // FIXME: Allow to override readwrite access with readonly
@@ -973,6 +973,7 @@ async function handleClientReady(client, message)
   }));
 
   // glue the clientVars together, send them and tell the other clients that a new one is there
+  //
 
   // Check that the client is still here. It might have disconnected between callbacks.
   if (sessioninfos[client.id] === undefined) {

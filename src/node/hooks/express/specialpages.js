@@ -68,6 +68,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
     // The below might break for pads being rewritten
     var isReadOnly = req.url.indexOf("/p/r.") === 0;
 
+    // 该hook不存在
     hooks.callAll("padInitToolbar", {
       toolbar: toolbar,
       isReadOnly: isReadOnly

@@ -119,6 +119,7 @@ function aCallFirst(hook_name, args, cb) {
   if (!args) args = {};
   if (!cb) cb = function () {};
   if (exports.plugins.hooks[hook_name] === undefined) return cb(null, []);
+  console.log("exports.plugins.hooks:" + JSON.stringify(exports.plugins.hooks));
   exports.mapFirst(
     exports.plugins.hooks[hook_name],
     function (hook, cb) {
