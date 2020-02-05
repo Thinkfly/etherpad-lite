@@ -328,16 +328,20 @@ Pad.prototype.getChatMessages = async function getChatMessages(start, end) {
 Pad.prototype.init = async function init(text) {
 
   // replace text with default text if text isn't set
+  // 替换文本为默认文本
   if (text == null) {
     text = settings.defaultPadText;
   }
 
   // try to load the pad
+  // 尝试加载pad
   let value = await db.get("pad:" + this.id);
 
   // if this pad exists, load it
+  // 如果这个pad存在，则加载
   if (value != null) {
     // copy all attr. To a transfrom via fromJsonable if necassary
+    // 复制所有属性，如果需要通过转换成json复制
     for (var attr in value) {
       if (jsonableList.indexOf(attr) !== -1) {
         this[attr] = this[attr].fromJsonable(value[attr]);
@@ -347,6 +351,7 @@ Pad.prototype.init = async function init(text) {
     }
   } else {
     // this pad doesn't exist, so create it
+    // 这个pad不存在，则创建它
     let firstChangeset = Changeset.makeSplice("\n", 0, 0, exports.cleanText(text));
 
     this.appendRevision(firstChangeset, '');

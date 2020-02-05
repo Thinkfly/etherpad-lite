@@ -67,6 +67,7 @@ npm.load({}, function() {
   var hooks = require("ep_etherpad-lite/static/js/pluginfw/hooks");
   hooks.plugins = plugins;
 
+    // 初始化数据库
     db.init()
     .then(plugins.update)
     .then(function() {
