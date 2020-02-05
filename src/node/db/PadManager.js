@@ -109,6 +109,7 @@ let padList = {
 
 /**
  * Returns a Pad Object with the callback
+ * 返回一个Pad对象
  * @param id A String with the id of the pad
  * @param {Function} callback
  */
@@ -135,14 +136,17 @@ exports.getPad = async function(id, text)
   let pad = globalPads.get(id);
 
   // return pad if it's already loaded
+  // 返回pad如果已经加载过
   if (pad != null) {
     return pad;
   }
 
   // try to load pad
+  // 尝试加载新的pad
   pad = new Pad(id);
 
   // initalize the pad
+  // 初始化pad
   await pad.init(text);
   globalPads.set(id, pad);
   padList.addPad(id);

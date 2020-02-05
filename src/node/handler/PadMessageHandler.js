@@ -948,8 +948,10 @@ async function handleClientReady(client, message)
   let authorName = value.name;
 
   // load the pad-object from the database
-  // 从数据库获取pad对象
+  // 从数据库获取pad对象，如果存在从数据库取出，如果不存在则创建新的pad，并插入数据库
   let pad = await padManager.getPad(padIds.padId);
+
+  console.log("pad : " + JSON.stringify(pad));
 
   // these db requests all need the pad object (timestamp of latest revision, author data)
   // 获取pad对象的需要的所有信息（最后版本的时间戳，作者数据）
@@ -973,20 +975,23 @@ async function handleClientReady(client, message)
   }));
 
   // glue the clientVars together, send them and tell the other clients that a new one is there
-  //
+  // 粘合客户端变量在一起，发送他们告诉其他客户端有一个新的客户端加入
 
   // Check that the client is still here. It might have disconnected between callbacks.
+  // 检查新的客户端还存在，因为它可能已经断开连接在回调的时候
   if (sessioninfos[client.id] === undefined) {
     return;
   }
 
   // Check if this author is already on the pad, if yes, kick the other sessions!
+  // 检查当前作者是否已经在线，如果已经在线，踢掉其他的session
   let roomClients = _getRoomClients(pad.id);
 
   for (let client of roomClients) {
     let sinfo = sessioninfos[client.id];
     if (sinfo && sinfo.author == author) {
       // fix user's counter, works on page refresh or if user closes browser window and then rejoins
+      // 修复用户数量，在页面刷新或如果用户关闭浏览器窗口和重新加入时工作
       sessioninfos[client.id] = {};
       client.leave(padIds.padId);
       client.json.send({disconnect:"userdup"});
@@ -994,18 +999,23 @@ async function handleClientReady(client, message)
   }
 
   // Save in sessioninfos that this session belonges to this pad
+  // 保存session信息，这session属于这个pad
   sessioninfos[client.id].padId = padIds.padId;
   sessioninfos[client.id].readOnlyPadId = padIds.readOnlyPadId;
   sessioninfos[client.id].readonly = padIds.readonly;
 
   // Log creation/(re-)entering of a pad
+  // 记录创建/进入一个pad
   let ip = remoteAddress[client.id];
 
   // Anonymize the IP address if IP logging is disabled
+  // 如果IP登录被禁用则把IP地址匿名
   if (settings.disableIPlogging) {
     ip = 'ANONYMOUS';
   }
 
+  // pad.head是头部版本号，如果有版本号则进入Pad，没有则是新的Pad创建
+  // todo 此处有个问题，如果新创建的pad没有被编辑过，那head仍然是0，会重新创建
   if (pad.head > 0) {
     accessLogger.info('[ENTER] Pad "' + padIds.padId + '": Client ' + client.id + ' with IP "' + ip + '" entered the pad');
   } else if (pad.head == 0) {
@@ -1015,18 +1025,22 @@ async function handleClientReady(client, message)
   if (message.reconnect) {
     // If this is a reconnect, we don't have to send the client the ClientVars again
     // Join the pad and start receiving updates
+    // 如果这是一个重连接，我们不必要重新给客户端发送客户端变量
+    // 加入pad并开始接收更新
     client.join(padIds.padId);
 
     // Save the revision in sessioninfos, we take the revision from the info the client send to us
+    // 将修订保存在sessioninfos中，我们从客户发送给我们的信息中获取修订
     sessioninfos[client.id].rev = message.client_rev;
 
     // During the client reconnect, client might miss some revisions from other clients. By using client revision,
     // this below code sends all the revisions missed during the client reconnect
-    var revisionsNeeded = [];
+    // 在客户端重连接的过程中，客户端可能丢失一些修订号从其他客户端。通过使用客户端修订号，下边的代码发送所有在客户端重连接过程中丢失的版本号
+    var revisionsNeeded = [];//需要返回的修订号数组
     var changesets = {};
 
-    var startNum = message.client_rev + 1;
-    var endNum = pad.getHeadRevisionNumber() + 1;
+    var startNum = message.client_rev + 1;// 客户端的修订号+1
+    var endNum = pad.getHeadRevisionNumber() + 1;//
 
     var headNum = pad.getHeadRevisionNumber();
 
