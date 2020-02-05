@@ -166,12 +166,12 @@ exports.opIterator = function (opsStr, optStartIndex) {
 
   function next(optObj) {
     var op = (optObj || obj);
-    console.info("next-regexResult[0]:" + regexResult[0]);
+    // console.info("next-regexResult[0]:" + regexResult[0]);
     if (regexResult[0]) {
-      console.info("next-regexResult[1]:" + regexResult[1]);
-      console.info("next-regexResult[2]:" + regexResult[2]);
-      console.info("next-regexResult[3]:" + regexResult[3]);
-      console.info("next-regexResult[4]:" + regexResult[4]);
+      // console.info("next-regexResult[1]:" + regexResult[1]);
+      // console.info("next-regexResult[2]:" + regexResult[2]);
+      // console.info("next-regexResult[3]:" + regexResult[3]);
+      // console.info("next-regexResult[4]:" + regexResult[4]);
       op.attribs = regexResult[1];
       op.lines = exports.parseNum(regexResult[2] || 0);
       op.opcode = regexResult[3];
@@ -180,7 +180,7 @@ exports.opIterator = function (opsStr, optStartIndex) {
     } else {
       exports.clearOp(op);
     }
-    console.info("next-op:" + JSON.stringify(op));
+    // console.info("next-op:" + JSON.stringify(op));
     return op;
   }
 
