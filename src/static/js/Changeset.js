@@ -410,12 +410,19 @@ exports.smartOpAssembler = function () {
 
     // 创建属性
     op.attribs = exports.makeAttribsString(opcode, attribs, pool);
+
+    console.log("appendOpWithText - op : " + JSON.stringify(op));
+
+    // 最后一个换行符的位置
     var lastNewlinePos = text.lastIndexOf('\n');
+
     if (lastNewlinePos < 0) {
+      // 没有换行符的情况
       op.chars = text.length;
       op.lines = 0;
       append(op);
     } else {
+      // 有换行符的情况，拆成2个op，1个是最后一个换行符之前的字符（包含最后一个换行符），1个是最后一个换行符之后的字符
       op.chars = lastNewlinePos + 1;
       op.lines = text.match(/\n/g).length;
       append(op);
@@ -1917,12 +1924,16 @@ exports.makeAttribsString = function (opcode, attribs, pool) {
     return attribs;
   } else if (pool && attribs && attribs.length) {
     if (attribs.length > 1) {
+      console.log("attribs before slice() : " + JSON.stringify(attribs));
       attribs = attribs.slice();
+      console.log("attribs after slice() : " + JSON.stringify(attribs));
       attribs.sort();
+      console.log("attribs after sort() : " + JSON.stringify(attribs));
     }
     var result = [];
     for (var i = 0; i < attribs.length; i++) {
       var pair = attribs[i];
+      console.log("pair : " + JSON.stringify(pair));
       if (opcode == '=' || (opcode == '+' && pair[1])) {
         result.push('*' + exports.numToString(pool.putAttrib(pair)));
       }
