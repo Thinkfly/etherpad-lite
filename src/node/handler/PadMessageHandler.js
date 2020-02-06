@@ -1095,8 +1095,10 @@ async function handleClientReady(client, message)
 
   } else {
     // This is a normal first connect
+    // 这是一个正常的第一次连接
 
     // prepare all values for the wire, there's a chance that this throws, if the pad is corrupted
+    // 准备所有的变量给报文，这里有一个机会会抛出异常，如果pad被毁坏
     try {
       var atext = Changeset.cloneAText(pad.atext);
       var attribsForWire = Changeset.prepareForWire(atext.attribs, pad.pool);
@@ -1112,6 +1114,7 @@ async function handleClientReady(client, message)
     // Warning: never ever send padIds.padId to the client. If the
     // client is read only you would open a security hole 1 swedish
     // mile wide...
+    // 警告:永远不要发送padIds.padId给客户端。如果客户端是只读的，你会打开一个1瑞典英里宽的安全漏洞…
     var clientVars = {
       "skinName": settings.skinName,
       "accountPrivs": {
@@ -1143,6 +1146,7 @@ async function handleClientReady(client, message)
       "opts": {},
       // tell the client the number of the latest chat-message, which will be
       // used to request the latest 100 chat-messages later (GET_CHAT_MESSAGES)
+      // 告诉客户端最后一个聊天消息的数字，之后将会用于请求最新的100条聊天消息
       "chatHead": pad.chatHead,
       "numConnectedUsers": roomClients.length,
       "readOnlyId": padIds.readOnlyPadId,
@@ -1170,30 +1174,37 @@ async function handleClientReady(client, message)
     }
 
     // Add a username to the clientVars if one avaiable
+    // 添加一个用户名到clientVars如果可用的话
     if (authorName != null) {
       clientVars.userName = authorName;
     }
 
     // call the clientVars-hook so plugins can modify them before they get sent to the client
+    // 调用clientVars-hook以便插件可以修改他们在发送到客户端之前
     let messages = await hooks.aCallAll("clientVars", { clientVars: clientVars, pad: pad });
 
     // combine our old object with the new attributes from the hook
+    // 合并我们的老对象和从hook获取到的新的属性值
     for (let msg of messages) {
       Object.assign(clientVars, msg);
     }
 
     // Join the pad and start receiving updates
+    // 加入pad和开始接收更新
     client.join(padIds.padId);
 
     // Send the clientVars to the Client
+    // 发送clientVars给客户端
     client.json.send({type: "CLIENT_VARS", data: clientVars});
 
     // Save the current revision in sessioninfos, should be the same as in clientVars
+    // 保存当前的修订号到sessioninfos中，应该和clientVars中一致
     sessioninfos[client.id].rev = pad.getHeadRevisionNumber();
 
     sessioninfos[client.id].author = author;
 
     // prepare the notification for the other users on the pad, that this user joined
+    // 准备这个pad的其他用户，该用户加入
     let messageToTheOtherUsers = {
        "type": "COLLABROOM",
        "data": {
@@ -1208,37 +1219,45 @@ async function handleClientReady(client, message)
     };
 
     // Add the authorname of this new User, if avaiable
+    // 给这个用户添加作者名，如果可用的话
     if (authorName != null) {
       messageToTheOtherUsers.data.userInfo.name = authorName;
     }
 
     // notify all existing users about new user
+    // 把新用户通知给其他所有存在的用户
     client.broadcast.to(padIds.padId).json.send(messageToTheOtherUsers);
 
     // Get sessions for this pad and update them (in parallel)
+    // 获取这个pad的session 和并行的更新他们
     roomClients = _getRoomClients(pad.id);
     await Promise.all(_getRoomClients(pad.id).map(async roomClient => {
 
       // Jump over, if this session is the connection session
+      // 跳过，如果这个session是当前连接的session
       if (roomClient.id == client.id) {
         return;
       }
 
       // Since sessioninfos might change while being enumerated, check if the
       // sessionID is still assigned to a valid session
+      // 由于sessioninfos可能在枚举时发生变化，所以请检查sessionID是否仍然分配给有效的会话
       if (sessioninfos[roomClient.id] === undefined) {
         return;
       }
 
       // get the authorname & colorId
+      // 获取用户名和颜色
       let author = sessioninfos[roomClient.id].author;
       let cached = historicalAuthorData[author];
 
       // reuse previously created cache of author's data
+      // 重用以前创建的作者数据缓存
       let p = cached ? Promise.resolve(cached) : authorManager.getAuthor(author);
 
       return p.then(authorInfo => {
         // Send the new User a Notification about this other user
+        // 向新用户发送关于此其他用户的通知
         let msg = {
           "type": "COLLABROOM",
           "data": {

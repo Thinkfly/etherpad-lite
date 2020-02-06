@@ -404,7 +404,11 @@ exports.smartOpAssembler = function () {
   }
 
   function appendOpWithText(opcode, text, attribs, pool) {
+
+    // 创建新Op
     var op = exports.newOp(opcode);
+
+    // 创建属性
     op.attribs = exports.makeAttribsString(opcode, attribs, pool);
     var lastNewlinePos = text.lastIndexOf('\n');
     if (lastNewlinePos < 0) {
@@ -1003,6 +1007,7 @@ exports.unpack = function (cs) {
 
 /**
  * Packs Changeset object into a string
+ * 打包一个changeset到一个字符串
  * @params oldLen {int} Old length of the Changeset
  * @params newLen {int] New length of the Changeset
  * @params opsStr {string} String encoding of the changes to be made
@@ -1508,12 +1513,15 @@ exports.identity = function (N) {
  * from spliceStart to spliceStart+numRemoved and inserts newText
  * instead. Also gives possibility to add attributes optNewTextAPairs
  * for the new text.
- * @param oldFullText {string} old text
- * @param spliecStart {int} where splicing starts
- * @param numRemoved {int} number of characters to be removed
- * @param newText {string} string to be inserted
+ * 创建一个在oldFullText上工作的变更集，并将文本从spliceStart删除到spliceStart+ numremove，
+ * 然后插入新文本。还提供了为新文本添加属性optNewTextAPairs的可能性。
+ *
+ * @param oldFullText {string} old text 老文本
+ * @param spliecStart {int} where splicing starts 结合处开始
+ * @param numRemoved {int} number of characters to be removed 移除的字符数量
+ * @param newText {string} string to be inserted 新的被插入的字符串
  * @param optNewTextAPairs {string} new pairs to be inserted
- * @param pool {AttribPool} Attribution Pool
+ * @param pool {AttribPool} Attribution Pool 属性池
  */
 exports.makeSplice = function (oldFullText, spliceStart, numRemoved, newText, optNewTextAPairs, pool) {
   var oldLen = oldFullText.length;
@@ -1526,6 +1534,12 @@ exports.makeSplice = function (oldFullText, spliceStart, numRemoved, newText, op
   }
   var oldText = oldFullText.substring(spliceStart, spliceStart + numRemoved);
   var newLen = oldLen + newText.length - oldText.length;
+
+  console.log("oldLen : " + oldLen);
+  console.log("spliceStart : " + spliceStart);
+  console.log("numRemoved : " + numRemoved);
+  console.log("oldText : " + oldText);
+  console.log("newLen : " + newLen);
 
   var assem = exports.smartOpAssembler();
   assem.appendOpWithText('=', oldFullText.substring(0, spliceStart));

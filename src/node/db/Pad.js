@@ -352,6 +352,8 @@ Pad.prototype.init = async function init(text) {
   } else {
     // this pad doesn't exist, so create it
     // 这个pad不存在，则创建它
+
+    // 创建第一个changeset
     let firstChangeset = Changeset.makeSplice("\n", 0, 0, exports.cleanText(text));
 
     this.appendRevision(firstChangeset, '');
