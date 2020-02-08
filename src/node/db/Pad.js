@@ -77,6 +77,7 @@ Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
   }
 
   var newAText = Changeset.applyToAText(aChangeset, this.atext, this.pool);
+  console.log("Pad.js - appendRevision - newAText : " + JSON.stringify(newAText));
   Changeset.copyAText(newAText, this.atext);
 
   var newRev = ++this.head;
@@ -100,6 +101,7 @@ Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
   this.saveToDatabase();
 
   // set the author to pad
+  // 设置作者到pad上
   if (author) {
     authorManager.addPad(author, this.id);
   }
