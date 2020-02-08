@@ -337,6 +337,8 @@ Pad.prototype.init = async function init(text) {
   // 尝试加载pad
   let value = await db.get("pad:" + this.id);
 
+  console.log("pad - init - value : " + JSON.stringify(value))
+
   // if this pad exists, load it
   // 如果这个pad存在，则加载
   if (value != null) {

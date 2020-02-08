@@ -128,11 +128,14 @@ exports.handleDisconnect = async function(client)
   let session = sessioninfos[client.id];
 
   // if this connection was already etablished with a handshake, send a disconnect message to the others
+  // 如果这个连接已经建立，发送一个断开消息给其他人
   if (session && session.author) {
     // Get the IP address from our persistant object
+    // 获取IP地址从持久化对象中
     let ip = remoteAddress[client.id];
 
     // Anonymize the IP address if IP logging is disabled
+    // 如果IP记录不可用则用匿名IP地址
     if (settings.disableIPlogging) {
       ip = 'ANONYMOUS';
     }
@@ -140,9 +143,11 @@ exports.handleDisconnect = async function(client)
     accessLogger.info('[LEAVE] Pad "' + session.padId + '": Author "' + session.author + '" on client ' + client.id + ' with IP "' + ip + '" left the pad');
 
     // get the author color out of the db
+    // 获取作者对应的颜色
     let color = await authorManager.getAuthorColorId(session.author);
 
     // prepare the notification for the other users on the pad, that this user left
+    // 准备用户离开的通知给其他在这个pad的用户
     let messageToTheOtherUsers = {
       "type": "COLLABROOM",
       "data": {
@@ -166,6 +171,7 @@ exports.handleDisconnect = async function(client)
   }
 
   // Delete the sessioninfos entrys of this session
+  // 删除sessioninfos中这个session的条目
   delete sessioninfos[client.id];
 }
 
@@ -898,6 +904,7 @@ function createSessionInfo(client, message)
 async function handleClientReady(client, message)
 {
   // check if all ok
+  // 检查是否所有参数都正确
   if (!message.token) {
     messageLogger.warn("Dropped message, CLIENT_READY Message has no token!");
     return;
@@ -921,12 +928,15 @@ async function handleClientReady(client, message)
   hooks.callAll("clientReady", message);
 
   // Get ro/rw id:s
+  // 获取只读还是读写
   let padIds = await readOnlyManager.getIds(message.padId);
 
   // check permissions
+  // 检查权限
 
   // Note: message.sessionID is an entierly different kind of
   // session from the sessions we use here! Beware
+  // 注意：message.sessionID是一种与我们在这里使用的session完全不同的session!当心
   // FIXME: Call our "sessions" "connections".
   // FIXME: Use a hook instead
   // FIXME: Allow to override readwrite access with readonly
@@ -934,6 +944,7 @@ async function handleClientReady(client, message)
   let accessStatus = statusObject.accessStatus;
 
   // no access, send the client a message that tells him why
+  // 不能访问，给客户端发送一个消息告诉他为什么
   if (accessStatus !== "grant") {
     client.json.send({ accessStatus });
     return;

@@ -1038,6 +1038,7 @@ exports.pack = function (oldLen, newLen, opsStr, bank) {
   var lenDiffStr = (lenDiff >= 0 ? '>' + exports.numToString(lenDiff) : '<' + exports.numToString(-lenDiff));
   var a = [];
   a.push('Z:', exports.numToString(oldLen), lenDiffStr, opsStr, '$', bank);
+  console.log("exports.pack - a.join('') : " + a.join(''));
   return a.join('');
 };
 
@@ -1558,8 +1559,13 @@ exports.makeSplice = function (oldFullText, spliceStart, numRemoved, newText, op
   console.log("spliceStart : " + spliceStart);
   console.log("numRemoved : " + numRemoved);
   console.log("oldText : " + oldText);
+  console.log("oldText.length : " + oldText.length);
+  console.log("newText : " + newText);
   console.log("newLen : " + newLen);
+  console.log("optNewTextAPairs : " + optNewTextAPairs);
+  console.log("pool : " + pool);
 
+  // 封装一个多Op的Changeset
   var assem = exports.smartOpAssembler();
   assem.appendOpWithText('=', oldFullText.substring(0, spliceStart));
   assem.appendOpWithText('-', oldText);
