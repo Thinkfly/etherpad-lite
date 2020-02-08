@@ -166,16 +166,16 @@ exports.opIterator = function (opsStr, optStartIndex) {
 
   function next(optObj) {
     var op = (optObj || obj);
-    console.info("next-regexResult[0]:" + regexResult[0]);
+    // console.info("next-regexResult[0]:" + regexResult[0]);
     // |7+bi
     if (regexResult[0]) {
-      console.info("next-regexResult[1]:" + regexResult[1]);
+      // console.info("next-regexResult[1]:" + regexResult[1]);
       // [1] = 空
-      console.info("next-regexResult[2]:" + regexResult[2]);
+      // console.info("next-regexResult[2]:" + regexResult[2]);
       // [2] = 7
-      console.info("next-regexResult[3]:" + regexResult[3]);
+      // console.info("next-regexResult[3]:" + regexResult[3]);
       // [3] = +
-      console.info("next-regexResult[4]:" + regexResult[4]);
+      // console.info("next-regexResult[4]:" + regexResult[4]);
       // [4] = bi
       op.attribs = regexResult[1];
       op.lines = exports.parseNum(regexResult[2] || 0);
@@ -185,7 +185,7 @@ exports.opIterator = function (opsStr, optStartIndex) {
     } else {
       exports.clearOp(op);
     }
-    console.info("next-op:" + JSON.stringify(op));
+    // console.info("next-op:" + JSON.stringify(op));
     return op;
   }
 
@@ -626,7 +626,7 @@ exports.opAssembler = function () {
   }
 
   function toString() {
-    console.log("pieces.join('') : " + pieces.join(''));
+    // console.log("pieces.join('') : " + pieces.join(''));
     return pieces.join('');
   }
 
@@ -647,25 +647,30 @@ exports.opAssembler = function () {
  */
 exports.stringIterator = function (str) {
 
+  // 当前位置
   var curIndex = 0;
 
   // newLines is the number of \n between curIndex and str.length
-  // newLines 是换行符的数量
+  // newLines 是curIndex 到 str.length之间的换行符数量
   var newLines = str.split("\n").length - 1
 
   /**
-   * 
+   * 获取剩余换行符数量
    */
   function getnewLines(){
     return newLines
   }
 
+  /**
+   * 检查剩余字符是否足够
+   * @param n
+   */
   function assertRemaining(n) {
     exports.assert(n <= remaining(), "!(", n, " <= ", remaining(), ")");
   }
 
   /**
-   * 获取n个字符，并前进
+   * 从curIndex开始，获取n个字符，curIndex前进n个字符，newLines重新计算
    * @param {获取字符数量} n 
    */
   function take(n) {
@@ -678,7 +683,7 @@ exports.stringIterator = function (str) {
   }
 
   /**
-   * 获取n个字符
+   * 从curIndex开始，获取n个字符
    * @param {获取字符数量} n 
    */
   function peek(n) {
@@ -688,7 +693,7 @@ exports.stringIterator = function (str) {
   }
 
   /**
-   * 跳过n个字符
+   * 从curIndex开始，跳过n个字符
    * @param {字符数量} n 
    */
   function skip(n) {
@@ -1102,10 +1107,14 @@ exports.pack = function (oldLen, newLen, opsStr, bank) {
  * @params str {string} String to which a Changeset should be applied 被应用Changeset的字符串
  */
 exports.applyToText = function (cs, str) {
-  console.log("applyToText - cs : " + JSON.stringify(cs));
-  console.log("applyToText - str : " + JSON.stringify(str));
+
+  console.log("applyToText - csStr : " + JSON.stringify(cs));
+  // console.log("applyToText - str : " + JSON.stringify(str));
+
   var unpacked = exports.unpack(cs);
-  console.log("applyToText - unpacked : " + JSON.stringify(unpacked));
+
+  console.log("applyToText - csObject : " + JSON.stringify(unpacked));
+
   exports.assert(str.length == unpacked.oldLen, "mismatched apply: ", str.length, " / ", unpacked.oldLen);
   var csIter = exports.opIterator(unpacked.ops);
   var bankIter = exports.stringIterator(unpacked.charBank);
@@ -1822,6 +1831,7 @@ exports.makeAText = function (text, attribs) {
 
 /**
  * Apply a Changeset to a AText
+ * 把一个changeset应用到一个text上
  * @param cs {Changeset} Changeset to be applied
  * @param atext {AText}
  * @param pool {AttribPool} Attribute Pool to add to
