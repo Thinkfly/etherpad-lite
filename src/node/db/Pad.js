@@ -358,6 +358,8 @@ Pad.prototype.init = async function init(text) {
     // 创建第一个changeset
     let firstChangeset = Changeset.makeSplice("\n", 0, 0, exports.cleanText(text));
 
+    console.log("firstChangeset : " + firstChangeset);
+
     this.appendRevision(firstChangeset, '');
   }
 

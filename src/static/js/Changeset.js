@@ -166,12 +166,17 @@ exports.opIterator = function (opsStr, optStartIndex) {
 
   function next(optObj) {
     var op = (optObj || obj);
-    // console.info("next-regexResult[0]:" + regexResult[0]);
+    console.info("next-regexResult[0]:" + regexResult[0]);
+    // |7+bi
     if (regexResult[0]) {
-      // console.info("next-regexResult[1]:" + regexResult[1]);
-      // console.info("next-regexResult[2]:" + regexResult[2]);
-      // console.info("next-regexResult[3]:" + regexResult[3]);
-      // console.info("next-regexResult[4]:" + regexResult[4]);
+      console.info("next-regexResult[1]:" + regexResult[1]);
+      // [1] = 空
+      console.info("next-regexResult[2]:" + regexResult[2]);
+      // [2] = 7
+      console.info("next-regexResult[3]:" + regexResult[3]);
+      // [3] = +
+      console.info("next-regexResult[4]:" + regexResult[4]);
+      // [4] = bi
       op.attribs = regexResult[1];
       op.lines = exports.parseNum(regexResult[2] || 0);
       op.opcode = regexResult[3];
@@ -180,7 +185,7 @@ exports.opIterator = function (opsStr, optStartIndex) {
     } else {
       exports.clearOp(op);
     }
-    // console.info("next-op:" + JSON.stringify(op));
+    console.info("next-op:" + JSON.stringify(op));
     return op;
   }
 
@@ -349,6 +354,12 @@ exports.smartOpAssembler = function () {
   // - strips final "="
   // - ignores 0-length changes
   // - reorders consecutive + and - (which margingOpAssembler doesn't do)
+  // 与opAssembler类似，但能够以速度为代价，从稍微宽松的输入生成符合要求的输出。
+  // 特别的：
+  // - 合并可合并的连续操作
+  // - 拿掉最后的"="操作
+  // - 忽略0长度的变化
+  // - 记录连续的 + 和 - 操作（margingOpAssembler做不到）
   var minusAssem = exports.mergingOpAssembler();
   var plusAssem = exports.mergingOpAssembler();
   var keepAssem = exports.mergingOpAssembler();
@@ -497,12 +508,23 @@ exports.mergingOpAssembler = function () {
   var bufOpAdditionalCharsAfterNewline = 0;
 
   function flush(isEndDocument) {
+
     if (bufOp.opcode) {
+
+      // bufOp存在操作符
+
       if (isEndDocument && bufOp.opcode == '=' && !bufOp.attribs) {
+
+        // 是文档结尾 并且 bufOp的操作符是 保留 并且 bufOp没有属性
         // final merged keep, leave it implicit
+        // 最后合并保持，保持隐式
+
       } else {
+
+        // 将bufOp加入op编码器
         assem.append(bufOp);
         if (bufOpAdditionalCharsAfterNewline) {
+          // 如果最后一行包含额外的字符，则新创建一个bufOp并加入编码器
           bufOp.chars = bufOpAdditionalCharsAfterNewline;
           bufOp.lines = 0;
           assem.append(bufOp);
@@ -514,21 +536,48 @@ exports.mergingOpAssembler = function () {
   }
 
   function append(op) {
+
+    // 如果新加入的op不包含文字变化则不处理
     if (op.chars > 0) {
+
       if (bufOp.opcode == op.opcode && bufOp.attribs == op.attribs) {
+
+        // 缓冲Op对象的操作类型和属性与新加入的op对象相同
+
         if (op.lines > 0) {
+
+          // op是多行文本
+
           // bufOp and additional chars are all mergeable into a multi-line op
+          // op和额外的字符都合并到一个多行op中
           bufOp.chars += bufOpAdditionalCharsAfterNewline + op.chars;
           bufOp.lines += op.lines;
           bufOpAdditionalCharsAfterNewline = 0;
+
         } else if (bufOp.lines == 0) {
+
+          // bufOp和op都为单行变化
+          // 等价于op.lines == 0 and bufOp.lines == 0
+
           // both bufOp and op are in-line
+          // 将新的op对象的变化文字数量加入bufOp
           bufOp.chars += op.chars;
+
         } else {
+
+          // 等价于op.lines == 0 and bufOp.lines > 0
+
           // append in-line text to multi-line bufOp
+          // 加入同一行文本到多行bufOp
+
           bufOpAdditionalCharsAfterNewline += op.chars;
+
         }
+
       } else {
+
+        // 缓冲Op对象的操作类型和属性与新加入的op对象不相同
+
         flush();
         exports.copyOp(op, bufOp);
       }
@@ -561,8 +610,11 @@ exports.mergingOpAssembler = function () {
  * 将一个op对象集合成字符串数组，并最后格式化成字符串
  */
 exports.opAssembler = function () {
+
   var pieces = [];
+
   // this function allows op to be mutated later (doesn't keep a ref)
+  // 这个方法允许op晚些再变形（不要保持一个引用）
 
   function append(op) {
     pieces.push(op.attribs);
@@ -574,6 +626,7 @@ exports.opAssembler = function () {
   }
 
   function toString() {
+    console.log("pieces.join('') : " + pieces.join(''));
     return pieces.join('');
   }
 
@@ -1044,11 +1097,15 @@ exports.pack = function (oldLen, newLen, opsStr, bank) {
 
 /**
  * Applies a Changeset to a string
- * @params cs {string} String encoded Changeset
- * @params str {string} String to which a Changeset should be applied
+ * 对一个字符串应用一个Changeset
+ * @params cs {string} String encoded Changeset 字符串编码的Changeset
+ * @params str {string} String to which a Changeset should be applied 被应用Changeset的字符串
  */
 exports.applyToText = function (cs, str) {
+  console.log("applyToText - cs : " + JSON.stringify(cs));
+  console.log("applyToText - str : " + JSON.stringify(str));
   var unpacked = exports.unpack(cs);
+  console.log("applyToText - unpacked : " + JSON.stringify(unpacked));
   exports.assert(str.length == unpacked.oldLen, "mismatched apply: ", str.length, " / ", unpacked.oldLen);
   var csIter = exports.opIterator(unpacked.ops);
   var bankIter = exports.stringIterator(unpacked.charBank);
@@ -1056,6 +1113,7 @@ exports.applyToText = function (cs, str) {
   var assem = exports.stringAssembler();
   while (csIter.hasNext()) {
     var op = csIter.next();
+    console.log("applyToText - op : " + JSON.stringify(op));
     switch (op.opcode) {
     case '+':
       //op is + and op.lines 0: no newlines must be in op.chars
