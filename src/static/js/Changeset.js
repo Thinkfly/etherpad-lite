@@ -405,6 +405,8 @@ exports.smartOpAssembler = function () {
 
   function appendOpWithText(opcode, text, attribs, pool) {
 
+    console.log("appendOpWithText - text : " + text);
+
     // 创建新Op
     var op = exports.newOp(opcode);
 
@@ -416,6 +418,8 @@ exports.smartOpAssembler = function () {
     // 最后一个换行符的位置
     var lastNewlinePos = text.lastIndexOf('\n');
 
+    console.log("appendOpWithText - lastNewlinePos : " + lastNewlinePos);
+
     if (lastNewlinePos < 0) {
       // 没有换行符的情况
       op.chars = text.length;
@@ -425,9 +429,17 @@ exports.smartOpAssembler = function () {
       // 有换行符的情况，拆成2个op，1个是最后一个换行符之前的字符（包含最后一个换行符），1个是最后一个换行符之后的字符
       op.chars = lastNewlinePos + 1;
       op.lines = text.match(/\n/g).length;
+
+      console.log("appendOpWithText - op2 : " + JSON.stringify(op));
+
       append(op);
+
+
       op.chars = text.length - (lastNewlinePos + 1);
       op.lines = 0;
+
+      console.log("appendOpWithText - op3 : " + JSON.stringify(op));
+
       append(op);
     }
   }
