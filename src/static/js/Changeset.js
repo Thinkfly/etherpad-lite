@@ -142,7 +142,7 @@ exports.newLen = function (cs) {
  * @return {Op} type object iterator
  */
 exports.opIterator = function (opsStr, optStartIndex) {
-  console.info("opsStr:" + opsStr + ", optStartIndex:" + optStartIndex);
+  // console.info("opsStr:" + opsStr + ", optStartIndex:" + optStartIndex);
   // 样例：|7=bi*0+3
   var regex = /((?:\*[0-9a-z]+)*)(?:\|([0-9a-z]+))?([-+=])([0-9a-z]+)|\?|/g;
   var startIndex = (optStartIndex || 0);
@@ -416,7 +416,7 @@ exports.smartOpAssembler = function () {
 
   function appendOpWithText(opcode, text, attribs, pool) {
 
-    console.log("appendOpWithText - text : " + text);
+    // console.log("appendOpWithText - text : " + text);
 
     // 创建新Op
     var op = exports.newOp(opcode);
@@ -424,12 +424,12 @@ exports.smartOpAssembler = function () {
     // 创建属性
     op.attribs = exports.makeAttribsString(opcode, attribs, pool);
 
-    console.log("appendOpWithText - op : " + JSON.stringify(op));
+    // console.log("appendOpWithText - op : " + JSON.stringify(op));
 
     // 最后一个换行符的位置
     var lastNewlinePos = text.lastIndexOf('\n');
 
-    console.log("appendOpWithText - lastNewlinePos : " + lastNewlinePos);
+    // console.log("appendOpWithText - lastNewlinePos : " + lastNewlinePos);
 
     if (lastNewlinePos < 0) {
       // 没有换行符的情况
@@ -441,7 +441,7 @@ exports.smartOpAssembler = function () {
       op.chars = lastNewlinePos + 1;
       op.lines = text.match(/\n/g).length;
 
-      console.log("appendOpWithText - op2 : " + JSON.stringify(op));
+      // console.log("appendOpWithText - op2 : " + JSON.stringify(op));
 
       append(op);
 
@@ -449,7 +449,7 @@ exports.smartOpAssembler = function () {
       op.chars = text.length - (lastNewlinePos + 1);
       op.lines = 0;
 
-      console.log("appendOpWithText - op3 : " + JSON.stringify(op));
+      // console.log("appendOpWithText - op3 : " + JSON.stringify(op));
 
       append(op);
     }
@@ -1008,17 +1008,17 @@ exports.textLinesMutator = function (lines) {
 /**
  * Function allowing iterating over two Op strings.
  * 函数允许在两个op字符串之间迭代
- * @params in1 {string} first Op string
- * @params idx1 {int} integer where 1st iterator should start
- * @params in2 {string} second Op string
- * @params idx2 {int} integer where 2nd iterator should start
- * @params func {function} which decides how 1st or 2nd iterator
- *         advances. When opX.opcode = 0, iterator X advances to
+ * @params in1 {string} first Op string 第一个op字符串
+ * @params idx1 {int} integer where 1st iterator should start 第一个迭代器的开始index
+ * @params in2 {string} second Op string 第二个op字符串
+ * @params idx2 {int} integer where 2nd iterator should start 第二个迭代器的开始index
+ * @params func {function} which decides how 1st or 2nd iterator 决定第一个或第二个迭代器如何前。
+ *         advances. When opX.opcode = 0, iterator X advances to 当opX.opcode = 0, 迭代器X 前进到下一个元素
  *         next element
- *         func has signature f(op1, op2, opOut)
- *             op1 - current operation of the first iterator
- *             op2 - current operation of the second iterator
- *             opOut - result operator to be put into Changeset
+ *         func has signature f(op1, op2, opOut) 方法的签名
+ *             op1 - current operation of the first iterator 第一个迭代器的当前操作
+ *             op2 - current operation of the second iterator 第二个迭代器的当前操作
+ *             opOut - result operator to be put into Changeset 要
  * @return {string} the integrated changeset
  */
 exports.applyZip = function (in1, idx1, in2, idx2, func) {
@@ -1108,12 +1108,15 @@ exports.pack = function (oldLen, newLen, opsStr, bank) {
  */
 exports.applyToText = function (cs, str) {
 
-  console.log("applyToText - csStr : " + JSON.stringify(cs));
+  // console.log("Changeset.js - applyToText - csStr : " + JSON.stringify(cs));
+  // Z:1>bi|7+bi$Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with Etherpad at http://etherpad.org\n\nWarning: DirtyDB is used. This is fine for testing but not recommended for production. -- To suppress these warning messages change suppressErrorsInPadText to true in your settings.json\n
+
   // console.log("applyToText - str : " + JSON.stringify(str));
 
   var unpacked = exports.unpack(cs);
 
-  console.log("applyToText - csObject : " + JSON.stringify(unpacked));
+  // console.log("Changeset.js - applyToText - csObject : " + JSON.stringify(unpacked));
+  // {"oldLen":1,"newLen":415,"ops":"|7+bi","charBank":"Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with Etherpad at http://etherpad.org\n\nWarning: DirtyDB is used. This is fine for testing but not recommended for production. -- To suppress these warning messages change suppressErrorsInPadText to true in your settings.json\n"}
 
   exports.assert(str.length == unpacked.oldLen, "mismatched apply: ", str.length, " / ", unpacked.oldLen);
   var csIter = exports.opIterator(unpacked.ops);
@@ -1122,7 +1125,8 @@ exports.applyToText = function (cs, str) {
   var assem = exports.stringAssembler();
   while (csIter.hasNext()) {
     var op = csIter.next();
-    console.log("applyToText - op : " + JSON.stringify(op));
+    // console.log("Changeset.js - applyToText - op : " + JSON.stringify(op));
+    // {"opcode":"+","chars":414,"lines":7,"attribs":""}
     switch (op.opcode) {
     case '+':
       //op is + and op.lines 0: no newlines must be in op.chars
@@ -1337,12 +1341,22 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
 
 /**
  * Applies a Changeset to the attribs string of a AText.
+ * 应用一个changeset到Atext的attribs字符串上
  * @param cs {string} Changeset
  * @param astr {string} the attribs string of a AText
  * @param pool {AttribsPool} the attibutes pool
  */
 exports.applyToAttribution = function (cs, astr, pool) {
   var unpacked = exports.unpack(cs);
+
+  // console.log("Changeset.js - applyToAttribution - cs : " + JSON.stringify(cs));
+  // Z:1>bi|7+bi$Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly ondocuments!\n\nGet involved with Etherpad at http://etherpad.org\n\nWarning: DirtyDB is used. This is fine for testing but not recommended for production. -- To suppress these warning messages change suppressErrorsInPadText to true in your settings.json\n
+  // console.log("Changeset.js - applyToAttribution - astr : " + JSON.stringify(astr));
+  // |1+1
+  // console.log("Changeset.js - applyToAttribution - pool : " + JSON.stringify(pool));
+  //  {"numToAttrib":{},"attribToNum":{},"nextNum":0}
+  // console.log("Changeset.js - applyToAttribution - unpacked : " + JSON.stringify(unpacked));
+  //  {"oldLen":1,"newLen":415,"ops":"|7+bi","charBank":"Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with Etherpad at http://etherpad.org\n\nWarning: DirtyDB is used. This is fine for testing but not recommended for production. -- To suppress these warning messages change suppressErrorsInPadText to true in your settings.json\n"}
 
   return exports.applyZip(astr, 0, unpacked.ops, 0, function (op1, op2, opOut) {
     return exports._slicerZipperFunc(op1, op2, opOut, pool);
