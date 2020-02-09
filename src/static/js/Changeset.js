@@ -1007,7 +1007,7 @@ exports.textLinesMutator = function (lines) {
 
 /**
  * Function allowing iterating over two Op strings.
- * 函数允许在两个op字符串之间迭代
+ * 执行压缩连个op字符串，压缩函数允许在两个op字符串之间迭代
  * @params in1 {string} first Op string 第一个op字符串
  * @params idx1 {int} integer where 1st iterator should start 第一个迭代器的开始index
  * @params in2 {string} second Op string 第二个op字符串
@@ -1028,17 +1028,33 @@ exports.applyZip = function (in1, idx1, in2, idx2, func) {
   var op1 = exports.newOp();
   var op2 = exports.newOp();
   var opOut = exports.newOp();
+
   while (op1.opcode || iter1.hasNext() || op2.opcode || iter2.hasNext()) {
+
+    // 如果op1.opcode是空，并且iter1有值，则将iter1的值赋值给op1
     if ((!op1.opcode) && iter1.hasNext()) iter1.next(op1);
+
+    // 如果op2.opcode是空，并且iter2有值，则将iter2的值赋值给op2
     if ((!op2.opcode) && iter2.hasNext()) iter2.next(op2);
+
+    // console.log("Changeset.js - applyZip - op1 : " + JSON.stringify(op1))
+    // console.log("Changeset.js - applyZip - op2 : " + JSON.stringify(op2))
+
+    // 合并op1和op2, opOut是合并结果
     func(op1, op2, opOut);
+
     if (opOut.opcode) {
+      // 如果opOut存在opcode，则加入op编码器
+
+      // console.log("Changeset.js - applyZip - opOut : " + JSON.stringify(opOut))
       //print(opOut.toSource());
       assem.append(opOut);
       opOut.opcode = '';
     }
+
   }
   assem.endDocument();
+
   return assem.toString();
 };
 
@@ -1096,7 +1112,7 @@ exports.pack = function (oldLen, newLen, opsStr, bank) {
   var lenDiffStr = (lenDiff >= 0 ? '>' + exports.numToString(lenDiff) : '<' + exports.numToString(-lenDiff));
   var a = [];
   a.push('Z:', exports.numToString(oldLen), lenDiffStr, opsStr, '$', bank);
-  console.log("exports.pack - a.join('') : " + a.join(''));
+  // console.log("Changeset.js - pack - a.join('') : " + a.join(''));
   return a.join('');
 };
 
@@ -1187,10 +1203,11 @@ exports.mutateTextLines = function (cs, lines) {
 
 /**
  * Composes two attribute strings (see below) into one.
- * @param att1 {string} first attribute string
- * @param att2 {string} second attribue string
- * @param resultIsMutaton {boolean}
- * @param pool {AttribPool} attribute pool
+ * 组合两个属性字符串到一个
+ * @param att1 {string} first attribute string 第一个属性字符串
+ * @param att2 {string} second attribue string 第二个属性字符串
+ * @param resultIsMutaton {boolean} 结果是否变化
+ * @param pool {AttribPool} attribute pool 属性池
  */
 exports.composeAttributes = function (att1, att2, resultIsMutation, pool) {
   // att1 and att2 are strings like "*3*f*1c", asMutation is a boolean.
@@ -1198,27 +1215,36 @@ exports.composeAttributes = function (att1, att2, resultIsMutation, pool) {
   // information, while other times they are treated as operations that
   // mutate a set of attributes, and this affects whether an empty value
   // is a deletion or a change.
+  // att1和att2是类似“*3*f*1c”的字符串，asMutation是一个布尔值。有时，属性(键、值)对被视为属性状态信息，而其他时候，它们被视为一组属性发生变化的操作，这将影响空值是删除还是更改。
   // Examples, of the form (att1Items, att2Items, resultIsMutation) -> result
-  // ([], [(bold, )], true) -> [(bold, )]
-  // ([], [(bold, )], false) -> []
-  // ([], [(bold, true)], true) -> [(bold, true)]
-  // ([], [(bold, true)], false) -> [(bold, true)]
-  // ([(bold, true)], [(bold, )], true) -> [(bold, )]
-  // ([(bold, true)], [(bold, )], false) -> []
+  // 1. ([], [(bold, )], true) -> [(bold, )]
+  // 2. ([], [(bold, )], false) -> []
+  // 3. ([], [(bold, true)], true) -> [(bold, true)]
+  // 4. ([], [(bold, true)], false) -> [(bold, true)]
+  // 5. ([(bold, true)], [(bold, )], true) -> [(bold, )]
+  // 6. ([(bold, true)], [(bold, )], false) -> []
   // pool can be null if att2 has no attributes.
+  // pool可以为空如果att2没有属性
   if ((!att1) && resultIsMutation) {
     // In the case of a mutation (i.e. composing two exportss),
     // an att2 composed with an empy att1 is just att2.  If att1
     // is part of an attribution string, then att2 may remove
     // attributes that are already gone, so don't do this optimization.
+    // 上述例子5、6，在一种突变的情况下(即组成两个出口)，一个att2与一个空的att1合并，则只是att2。
+    // 如果att1只有属性字符串的一部分，那么att2可能会删除已经消失的属性，所以不要进行这种优化。
+    // 也就是，如果att1不存在，并且att1和att2的attribs相同，则返回att2
     return att2;
   }
   if (!att2) return att1;
   var atts = [];
+  console.log("Changeset.js - composeAttributes - att1 : " + att1);
   att1.replace(/\*([0-9a-z]+)/g, function (_, a) {
     atts.push(pool.getAttrib(exports.parseNum(a)));
     return '';
   });
+  console.log("Changeset.js - composeAttributes - att1 - replace : " + att1);
+
+  console.log("Changeset.js - composeAttributes - att2 : " + att2);
   att2.replace(/\*([0-9a-z]+)/g, function (_, a) {
     var pair = pool.getAttrib(exports.parseNum(a));
     var found = false;
@@ -1239,12 +1265,23 @@ exports.composeAttributes = function (att1, att2, resultIsMutation, pool) {
     }
     return '';
   });
+
+  console.log("Changeset.js - composeAttributes - att2 -replace : " + att2);
+
+  console.log("Changeset.js - composeAttributes - atts : " + JSON.stringify(atts));
+
   atts.sort();
+
+  console.log("Changeset.js - composeAttributes - atts - sort : " + JSON.stringify(atts));
+
   var buf = exports.stringAssembler();
   for (var i = 0; i < atts.length; i++) {
     buf.append('*');
+    console.log("Changeset.js - composeAttributes - pool.putAttrib(atts[i]) : " + pool.putAttrib(atts[i]));
     buf.append(exports.numToString(pool.putAttrib(atts[i])));
   }
+
+  console.log("Changeset.js - composeAttributes - buf.toString() : " + buf.toString());
   //print(att1+" / "+att2+" / "+buf.toString());
   return buf.toString();
 };
@@ -1252,30 +1289,46 @@ exports.composeAttributes = function (att1, att2, resultIsMutation, pool) {
 /**
  * Function used as parameter for applyZip to apply a Changeset to an
  * attribute
+ * 函数，用作applyZip的参数，以便将changeset应用于attribs
  */
 exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
   // attOp is the op from the sequence that is being operated on, either an
   // attribution string or the earlier of two exportss being composed.
   // pool can be null if definitely not needed.
+  // attOp是来自正在操作的序列的op，要么是一个属性字符串，要么是正在组成的两个输出的前面一个。池可以是空的，如果肯定不需要。
   //print(csOp.toSource()+" "+attOp.toSource()+" "+opOut.toSource());
+
   if (attOp.opcode == '-') {
+    // 如果attOp是 减 操作，则直接使用attOp返回，并把attOp的opcode置空
     exports.copyOp(attOp, opOut);
     attOp.opcode = '';
   } else if (!attOp.opcode) {
+    // 如果attOp不存在opcode，则直接使用csOp返回，并把csOp的opcode置空
     exports.copyOp(csOp, opOut);
     csOp.opcode = '';
   } else {
+
+    // attOp是 加 或者 保持 操作
+
     switch (csOp.opcode) {
     case '-':
       {
         if (csOp.chars <= attOp.chars) {
+
+          // 如果csOp的字符数小于attOp
+
           // delete or delete part
+          // 删除或删除部分
+
           if (attOp.opcode == '=') {
+            // 如果attOp的opcode是 保持，则返回csOp
             opOut.opcode = '-';
             opOut.chars = csOp.chars;
             opOut.lines = csOp.lines;
             opOut.attribs = '';
           }
+
+          // 从attOp中减去csOp的值，并置空csOp，如果attOp不存在了，则attOp也要置空
           attOp.chars -= csOp.chars;
           attOp.lines -= csOp.lines;
           csOp.opcode = '';
@@ -1283,13 +1336,21 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
             attOp.opcode = '';
           }
         } else {
+
+          // 如果csOp的字符数大于attOp
+
           // delete and keep going
+          // 删除并继续
+
+          // 如果attOp是 保持 操作，则返回attOp的值
           if (attOp.opcode == '=') {
             opOut.opcode = '-';
             opOut.chars = attOp.chars;
             opOut.lines = attOp.lines;
             opOut.attribs = '';
           }
+
+          // 从csOp减去attOp的值，并置空attOp
           csOp.chars -= attOp.chars;
           csOp.lines -= attOp.lines;
           attOp.opcode = '';
@@ -1299,6 +1360,7 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
     case '+':
       {
         // insert
+        // 如果csOp是插入操作，则直接返回csOp，并置空csOp
         exports.copyOp(csOp, opOut);
         csOp.opcode = '';
         break;
@@ -1306,7 +1368,12 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
     case '=':
       {
         if (csOp.chars <= attOp.chars) {
+
+          // 如果csOp的字符数小于attOp
           // keep or keep part
+          // 保持或保持部分
+
+          // 使用attOp的opcode，和csOp的数值，合并attOp和csOp的属性，并置空csOp，从attOp中减去csOp的值，如果此时attOp没有字符数，则也置空attOp
           opOut.opcode = attOp.opcode;
           opOut.chars = csOp.chars;
           opOut.lines = csOp.lines;
@@ -1331,6 +1398,7 @@ exports._slicerZipperFunc = function (attOp, csOp, opOut, pool) {
       }
     case '':
       {
+        // 如果csOp的opcode是空，则直接返回attOp，并把attOp的opcode置空
         exports.copyOp(attOp, opOut);
         attOp.opcode = '';
         break;
@@ -1358,6 +1426,8 @@ exports.applyToAttribution = function (cs, astr, pool) {
   // console.log("Changeset.js - applyToAttribution - unpacked : " + JSON.stringify(unpacked));
   //  {"oldLen":1,"newLen":415,"ops":"|7+bi","charBank":"Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with Etherpad at http://etherpad.org\n\nWarning: DirtyDB is used. This is fine for testing but not recommended for production. -- To suppress these warning messages change suppressErrorsInPadText to true in your settings.json\n"}
 
+
+  // 压缩并合并两个op字符串，此处astr是当前pad的atext字段的attribs的op字符串，unpacked.op是changeset的op字符串
   return exports.applyZip(astr, 0, unpacked.ops, 0, function (op1, op2, opOut) {
     return exports._slicerZipperFunc(op1, op2, opOut, pool);
   });
@@ -1636,15 +1706,15 @@ exports.makeSplice = function (oldFullText, spliceStart, numRemoved, newText, op
   var oldText = oldFullText.substring(spliceStart, spliceStart + numRemoved);
   var newLen = oldLen + newText.length - oldText.length;
 
-  console.log("oldLen : " + oldLen);
-  console.log("spliceStart : " + spliceStart);
-  console.log("numRemoved : " + numRemoved);
-  console.log("oldText : " + oldText);
-  console.log("oldText.length : " + oldText.length);
-  console.log("newText : " + newText);
-  console.log("newLen : " + newLen);
-  console.log("optNewTextAPairs : " + optNewTextAPairs);
-  console.log("pool : " + pool);
+  // console.log("oldLen : " + oldLen);
+  // console.log("spliceStart : " + spliceStart);
+  // console.log("numRemoved : " + numRemoved);
+  // console.log("oldText : " + oldText);
+  // console.log("oldText.length : " + oldText.length);
+  // console.log("newText : " + newText);
+  // console.log("newLen : " + newLen);
+  // console.log("optNewTextAPairs : " + optNewTextAPairs);
+  // console.log("pool : " + pool);
 
   // 封装一个多Op的Changeset
   var assem = exports.smartOpAssembler();
@@ -1767,6 +1837,7 @@ exports.moveOpsToNewPool = function (cs, oldPool, newPool) {
 
 /**
  * create an attribution inserting a text
+ * 根据一个插入的文本生成属性
  * @param text {string} text to be inserted
  */
 exports.makeAttribution = function (text) {
@@ -1831,10 +1902,11 @@ exports.mapAttribNumbers = function (cs, func) {
 };
 
 /**
- * Create a Changeset going from Identity to a certain state
- * @params text {string} text of the final change
+ * Create a AText going from Identity to a certain state
+ * 创建一个AText对象根据给定的文本和属性
+ * @params text {string} text of the final change 最后的变更文本
  * @attribs attribs {string} optional, operations which insert
- *    the text and also puts the right attributes
+ *    the text and also puts the right attributes 可选的，插入文本并放入正确属性的操作
  */
 exports.makeAText = function (text, attribs) {
   return {

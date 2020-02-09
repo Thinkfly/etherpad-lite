@@ -76,6 +76,7 @@ Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
     author = '';
   }
 
+  // 把一个changeset应用到当前pad的atext字段上
   var newAText = Changeset.applyToAText(aChangeset, this.atext, this.pool);
   // console.log("Pad.js - appendRevision - newAText : " + JSON.stringify(newAText));
 
@@ -83,6 +84,7 @@ Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
 
   Changeset.copyAText(newAText, this.atext);
 
+  // 创建新的修订版本
   var newRev = ++this.head;
 
   var newRevData = {};
@@ -92,14 +94,17 @@ Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
   newRevData.meta.timestamp = Date.now();
 
   // ex. getNumForAuthor
+  // 如果作者不为空，则属性池加入作者属性
   if (author != '') {
     this.pool.putAttrib(['author', author || '']);
   }
 
+  // 每100个新修订号返回一次atext对象
   if (newRev % 100 == 0) {
     newRevData.meta.atext = this.atext;
   }
 
+  // 保存修订信息到数据库
   db.set("pad:" + this.id + ":revs:" + newRev, newRevData);
   this.saveToDatabase();
 
@@ -117,6 +122,7 @@ Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
 };
 
 // save all attributes to the database
+// 保存所有属性到数据库
 Pad.prototype.saveToDatabase = function saveToDatabase() {
   var dbObject = {};
 
@@ -148,10 +154,19 @@ Pad.prototype.getRevisionAuthor = function getRevisionAuthor(revNum) {
   return db.getSub("pad:" + this.id + ":revs:" + revNum, ["meta", "author"]);
 }
 
+/**
+ * 根据修订号，获取修订的时间
+ * @param revNum
+ * @returns {Promise<null|*>}
+ */
 Pad.prototype.getRevisionDate = function getRevisionDate(revNum) {
   return db.getSub("pad:" + this.id + ":revs:" + revNum, ["meta", "timestamp"]);
 }
 
+/**
+ * 从属性池中，获取所有作者信息
+ * @returns {[]}
+ */
 Pad.prototype.getAllAuthors = function getAllAuthors() {
   var authors = [];
 
@@ -342,7 +357,7 @@ Pad.prototype.init = async function init(text) {
   // 尝试加载pad
   let value = await db.get("pad:" + this.id);
 
-  console.log("pad - init - value : " + JSON.stringify(value))
+  console.log("Pad.js - init - value : " + JSON.stringify(value))
 
   // if this pad exists, load it
   // 如果这个pad存在，则加载

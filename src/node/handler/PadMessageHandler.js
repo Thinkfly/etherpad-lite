@@ -232,7 +232,7 @@ exports.handleMessage = async function(client, message)
    * 最终处理消息方法
    */
   function finalHandler() {
-    console.info("finalHandler:" + JSON.stringify(message.type));
+    console.info("PadMessageHandler.js - finalHandler - message.type:" + JSON.stringify(message.type));
     // Check what type of message we get and delegate to the other methods
     if (message.type == "CLIENT_READY") {
       // 客户端初始化
@@ -962,7 +962,7 @@ async function handleClientReady(client, message)
   // 从数据库获取pad对象，如果存在从数据库取出，如果不存在则创建新的pad，并插入数据库
   let pad = await padManager.getPad(padIds.padId);
 
-  console.log("pad : " + JSON.stringify(pad));
+  console.log("PadMesseageHandler.js - handleClientReady - pad : " + JSON.stringify(pad));
 
   // these db requests all need the pad object (timestamp of latest revision, author data)
   // 获取pad对象的需要的所有信息（最后版本的时间戳，作者数据）
