@@ -166,16 +166,16 @@ exports.opIterator = function (opsStr, optStartIndex) {
 
   function next(optObj) {
     var op = (optObj || obj);
-    // console.info("next-regexResult[0]:" + regexResult[0]);
+    // console.info("Changeset.js - opIterator - next - regexResult[0]:" + regexResult[0]);
     // |7+bi
     if (regexResult[0]) {
-      // console.info("next-regexResult[1]:" + regexResult[1]);
+      // console.info("Changeset.js - opIterator - next - regexResult[1]:" + regexResult[1]);
       // [1] = 空
-      // console.info("next-regexResult[2]:" + regexResult[2]);
+      // console.info("Changeset.js - opIterator - next - regexResult[2]:" + regexResult[2]);
       // [2] = 7
-      // console.info("next-regexResult[3]:" + regexResult[3]);
+      // console.info("Changeset.js - opIterator - next - regexResult[3]:" + regexResult[3]);
       // [3] = +
-      // console.info("next-regexResult[4]:" + regexResult[4]);
+      // console.info("Changeset.js - opIterator - next - regexResult[4]:" + regexResult[4]);
       // [4] = bi
       op.attribs = regexResult[1];
       op.lines = exports.parseNum(regexResult[2] || 0);
@@ -287,6 +287,7 @@ exports.stringOp = function (str) {
 exports.checkRep = function (cs) {
   // doesn't check things that require access to attrib pool (e.g. attribute order)
   // or original string (e.g. newline positions)
+  // 不需要检查的东西，访问attrib pool(如属性顺序)或原始字符串(如换行位置)
   var unpacked = exports.unpack(cs);
   var oldLen = unpacked.oldLen;
   var newLen = unpacked.newLen;
@@ -1812,6 +1813,7 @@ exports.characterRangeFollow = function (cs, startChar, endChar, insertionsAfter
 /**
  * Iterate over attributes in a changeset and move them from
  * oldPool to newPool
+ * 迭代所有changset中的属性和移动他们从老的池子到新的池子
  * @param cs {Changeset} Chageset/attribution string to be iterated over
  * @param oldPool {AttribPool} old attributes pool
  * @param newPool {AttribPool} new attributes pool
@@ -1819,6 +1821,7 @@ exports.characterRangeFollow = function (cs, startChar, endChar, insertionsAfter
  */
 exports.moveOpsToNewPool = function (cs, oldPool, newPool) {
   // works on exports or attribution string
+  // 工作在导出或属性字符串
   var dollarPos = cs.indexOf('$');
   if (dollarPos < 0) {
     dollarPos = cs.length;
@@ -1826,6 +1829,7 @@ exports.moveOpsToNewPool = function (cs, oldPool, newPool) {
   var upToDollar = cs.substring(0, dollarPos);
   var fromDollar = cs.substring(dollarPos);
   // order of attribs stays the same
+  // 保持属性的顺序一致
   return upToDollar.replace(/\*([0-9a-z]+)/g, function (_, a) {
     var oldNum = exports.parseNum(a);
     var pair = oldPool.getAttrib(oldNum);

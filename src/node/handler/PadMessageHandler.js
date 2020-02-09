@@ -232,6 +232,8 @@ exports.handleMessage = async function(client, message)
    * 最终处理消息方法
    */
   function finalHandler() {
+    console.info("PadMessageHandler.js - finalHandler - message:" + JSON.stringify(message));
+
     console.info("PadMessageHandler.js - finalHandler - message.type:" + JSON.stringify(message.type));
     // Check what type of message we get and delegate to the other methods
     if (message.type == "CLIENT_READY") {
@@ -241,12 +243,15 @@ exports.handleMessage = async function(client, message)
       // 处理时间滑块
       handleChangesetRequest(client, message);
     } else if(message.type == "COLLABROOM") {
-      
+      console.info("PadMessageHandler.js - finalHandler - message.data.type:" + JSON.stringify(message.data.type));
       if (thisSession.readonly) {
         messageLogger.warn("Dropped message, COLLABROOM for readonly pad");
       } else if (message.data.type == "USER_CHANGES") {
+
+        // 请求样例：{"type":"COLLABROOM","component":"pad","data":{"type":"USER_CHANGES","baseRev":0,"changeset":"Z:bj>1*0+1$1","apool":{"numToAttrib":{"0":["author","a.F3wABRpxZB8PVCGP"]},"nextNum":1}}}
+
         stats.counter('pendingEdits').inc()
-        padChannels.emit(message.padId, {client: client, message: message}); // add to pad queue
+        padChannels.emit(message.padId, {client: client, message: message}); // add to pad queue 添加到pad队列
       } else if (message.data.type == "USERINFO_UPDATE") {
         handleUserInfoUpdate(client, message);
       } else if (message.data.type == "CHAT_MESSAGE") {
@@ -564,6 +569,8 @@ function handleUserInfoUpdate(client, message)
  * Handles a USER_CHANGES message, where the client submits its local
  * edits as a changeset.
  *
+ * 处理一个USER_CHANGES消息，客户端提交它的本地编辑作为一个changeset
+ *
  * This handler's job is to update the incoming changeset so that it applies
  * to the latest revision, then add it to the pad, broadcast the changes
  * to all other clients, and send a confirmation to the submitting client.
@@ -579,10 +586,13 @@ async function handleUserChanges(data)
   var client = data.client
     , message = data.message
 
+  // message : {"type":"COLLABROOM","component":"pad","data":{"type":"USER_CHANGES","baseRev":0,"changeset":"Z:bj>1*0+1$1","apool":{"numToAttrib":{"0":["author","a.F3wABRpxZB8PVCGP"]},"nextNum":1}}}
+
   // This one's no longer pending, as we're gonna process it now
   stats.counter('pendingEdits').dec()
 
   // Make sure all required fields are present
+  // 确保所有必须的字段都存在
   if (message.data.baseRev == null) {
     messageLogger.warn("Dropped message, USER_CHANGES Message has no baseRev!");
     return;
@@ -601,34 +611,43 @@ async function handleUserChanges(data)
   // TODO: this might happen with other messages too => find one place to copy the session
   // and always use the copy. atm a message will be ignored if the session is gone even
   // if the session was valid when the message arrived in the first place
+  // 这种情况也可能发生在其他消息上=>找到一个地方复制会话并始终使用该副本。atm消息将被忽略，如果会话已经消失，
+  // 即使会话在消息到达的第一时间是有效的
   if (!sessioninfos[client.id]) {
     messageLogger.warn("Dropped message, disconnect happened in the mean time");
     return;
   }
 
   // get all Vars we need
+  // 获取所有我们需要的变量
   var baseRev = message.data.baseRev;
   var wireApool = (new AttributePool()).fromJsonable(message.data.apool);
   var changeset = message.data.changeset;
 
   // The client might disconnect between our callbacks. We should still
   // finish processing the changeset, so keep a reference to the session.
+  // 客户端可能在我们回调之间断开连接。我们应该仍然完成处理这个changeset，所以保存这个session的引用
   var thisSession = sessioninfos[client.id];
 
   // Measure time to process edit
+  // 测量处理编辑的时间
   var stopWatch = stats.timer('edits').start();
 
   // get the pad
+  // 获取pad信息
   let pad = await padManager.getPad(thisSession.padId);
 
   // create the changeset
+  // 创建changeset
   try {
     try {
       // Verify that the changeset has valid syntax and is in canonical form
+      // 验证changeset具有有效的语法和规范形式
       Changeset.checkRep(changeset);
 
       // Verify that the attribute indexes used in the changeset are all
       // defined in the accompanying attribute pool.
+      // 验证changeset中的属性索引全部都在attribute pool中定义
       Changeset.eachAttribNumber(changeset, function(n) {
         if (!wireApool.getAttrib(n)) {
           throw new Error("Attribute pool is missing attribute " + n + " for changeset " + changeset);
@@ -636,15 +655,24 @@ async function handleUserChanges(data)
       });
 
       // Validate all added 'author' attribs to be the same value as the current user
+      // 验证所有添加'作者'属性对于当前用户都有相同的值
       var iterator = Changeset.opIterator(Changeset.unpack(changeset).ops)
         , op;
 
       while (iterator.hasNext()) {
+        // console.log("PadMessageHandler.js - handleUserChanges - op = iterator.next() start");
         op = iterator.next()
+        // console.log("PadMessageHandler.js - handleUserChanges - op = iterator.next() end");
+        // console.log("PadMessageHandler.js - handleUserChanges - op : " + JSON.stringify(op));
 
-        // + can add text with attribs
-        // = can change or add attribs
+        // op : *0+1 -> {"opcode":"+","chars":1,"lines":0,"attribs":"*0"}
+
+        // + can add text with attribs + 可以添加文字和属性
+        // = can change or add attribs = 可以改变或者添加属性
         // - can have attribs, but they are discarded and don't show up in the attribs - but do show up in the  pool
+        // - 可以有attribs，但它们会被丢弃，不会出现在attribs中
+
+        console.log("PadMessageHandler.js - handleUserChanges - wireApool : " + JSON.stringify(wireApool));
 
         op.attribs.split('*').forEach(function(attr) {
           if (!attr) return;
@@ -652,7 +680,10 @@ async function handleUserChanges(data)
           attr = wireApool.getAttrib(attr);
           if (!attr) return;
 
+          console.log("PadMessageHandler.js - handleUserChanges - attr : " + JSON.stringify(attr));
+
           // the empty author is used in the clearAuthorship functionality so this should be the only exception
+          // 在clearAuthorship功能中使用了空作者，所以这应该只能抛出异常
           if ('author' == attr[0] && (attr[1] != thisSession.author && attr[1] != '')) {
             throw new Error("Trying to submit changes as another author in changeset " + changeset);
           }
@@ -662,10 +693,12 @@ async function handleUserChanges(data)
       // ex. adoptChangesetAttribs
 
       // Afaik, it copies the new attributes from the changeset, to the global Attribute Pool
+      // 据我所知，它从changeset复制了新的属性到全局属性池
       changeset = Changeset.moveOpsToNewPool(changeset, wireApool, pad.pool);
 
     } catch(e) {
       // There is an error in this changeset, so just refuse it
+      // 有一个错误在changeset，所以拒绝它
       client.json.send({ disconnect: "badChangeset" });
       stats.meter('failedChangesets').mark();
       throw new Error("Can't apply USER_CHANGES, because " + e.message);
@@ -678,20 +711,26 @@ async function handleUserChanges(data)
     // The client's changeset might not be based on the latest revision,
     // since other clients are sending changes at the same time.
     // Update the changeset so that it can be applied to the latest revision.
+    // 客户端的changeset不一定是基于最后修订号的，因为其他客户端可能在同一时间发送变更。
+    // 更新changeset以便它可以被应用在最后的修订号上
     while (r < pad.getHeadRevisionNumber()) {
       r++;
 
+      // 获取r对应的changeset
       let c = await pad.getRevisionChangeset(r);
 
       // At this point, both "c" (from the pad) and "changeset" (from the
       // client) are relative to revision r - 1. The follow function
       // rebases "changeset" so that it is relative to revision r
       // and can be applied after "c".
+      // 此时，“c”(来自pad)和“changeset”(来自客户机)都是相对于修订r - 1的。
+      // 下面的函数重新建立“changeset”，使其相对于修订r，并可在“c”之后应用。
 
       try {
         // a changeset can be based on an old revision with the same changes in it
         // prevent eplite from accepting it TODO: better send the client a NEW_CHANGES
         // of that revision
+        // 一个changeset可以基于一个旧的修订版，其中如果包含相同的变更，从而阻止接受它，最好发送一个NEW_CHANGES给可以客户端关于这个修订
         if (baseRev + 1 == r && c == changeset) {
           client.json.send({disconnect:"badChangeset"});
           stats.meter('failedChangesets').mark();
