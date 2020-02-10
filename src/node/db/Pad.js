@@ -78,7 +78,7 @@ Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
 
   // 把一个changeset应用到当前pad的atext字段上
   var newAText = Changeset.applyToAText(aChangeset, this.atext, this.pool);
-  // console.log("Pad.js - appendRevision - newAText : " + JSON.stringify(newAText));
+  console.log("Pad.js - appendRevision - newAText : " + JSON.stringify(newAText));
 
   //{"text":"Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nGet involved with Etherpad at http://etherpad.org\n\nWarning: DirtyDB is used. This is fine for testing but not recommended for production. -- To suppress these warning messages change suppressErrorsInPadText to true in your settings.json\n\n","attribs":"|8+bj"}
 

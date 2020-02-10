@@ -747,6 +747,7 @@ async function handleUserChanges(data)
 
     let prevText = pad.text();
 
+    // 检查changeset的oldLen和当前文字的长度是否相同，不相同报错
     if (Changeset.oldLen(changeset) != prevText.length) {
       client.json.send({disconnect:"badChangeset"});
       stats.meter('failedChangesets').mark();
