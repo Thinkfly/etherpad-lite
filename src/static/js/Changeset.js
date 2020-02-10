@@ -1719,8 +1719,8 @@ exports.identity = function (N) {
  * from spliceStart to spliceStart+numRemoved and inserts newText
  * instead. Also gives possibility to add attributes optNewTextAPairs
  * for the new text.
- * 创建一个在oldFullText上工作的变更集，并将文本从spliceStart删除到spliceStart+ numremove，
- * 然后插入新文本。还提供了为新文本添加属性optNewTextAPairs的可能性。
+ * 创建一个在oldFullText上工作的变更集，并将文本从spliceStart到spliceStart+ numremove，
+ * 插入新文本。还提供了为新文本添加属性optNewTextAPairs的可能性。
  *
  * @param oldFullText {string} old text 老文本
  * @param spliecStart {int} where splicing starts 结合处开始

@@ -768,6 +768,7 @@ async function handleUserChanges(data)
     }
 
     // Make sure the pad always ends with an empty line.
+    // 确保pad总是以空行结尾
     if (pad.text().lastIndexOf("\n") != pad.text().length-1) {
       var nlChangeset = Changeset.makeSplice(pad.text(), pad.text().length - 1, 0, "\n");
       pad.appendRevision(nlChangeset);
@@ -781,9 +782,15 @@ async function handleUserChanges(data)
   stopWatch.end();
 }
 
+/**
+ * 更新pad客户端，逐个判断当前pad上的客户端的修订号，如果小于当前修订号，就给他们发消息
+ * @param pad
+ * @returns {Promise<void>}
+ */
 exports.updatePadClients = async function(pad)
 {
   // skip this if no-one is on this pad
+  // 跳过这一步，如果没有人在pad上
   let roomClients = _getRoomClients(pad.id);
 
   if (roomClients.length == 0) {
@@ -797,13 +804,19 @@ exports.updatePadClients = async function(pad)
   // BEFORE first result will be landed to our cache object. The solution is to replace parallel processing
   // via async.forEach with sequential for() loop. There is no real benefits of running this in parallel,
   // but benefit of reusing cached revision object is HUGE
+  // 因为所有的客户端通常都会获得相同的变更集，所以将它们存储在本地缓存中，以删除不必要的到datalayer的往返
+  // 注:下面的注意现在可能通过改变承诺/异步
+  // TODO:在现实世界中，如果我们在没有datalayer缓存的情况下工作，所有对修订的请求都会被触发
+  // 在第一个结果到达缓存对象之前。解决方案是通过异步代替并行处理。forEach与序列for()循环。并行运行它并没有真正的好处，但是重用缓存的修订对象的好处是巨大的
   let revCache = {};
 
   // go through all sessions on this pad
+  // 检查所有这个pad的session
   for (let client of roomClients) {
     let sid = client.id;
 
     // send them all new changesets
+    // 发送给他们所有新的changeset
     while (sessioninfos[sid] && sessioninfos[sid].rev < pad.getHeadRevisionNumber()) {
       let r = sessioninfos[sid].rev + 1;
       let revision = revCache[r];
@@ -817,13 +830,16 @@ exports.updatePadClients = async function(pad)
           currentTime = revision.meta.timestamp;
 
       // next if session has not been deleted
+      // 如果session没有被删除则继续
       if (sessioninfos[sid] == null) {
         continue;
       }
 
       if (author == sessioninfos[sid].author) {
+        // 该变更的作者
         client.json.send({ "type": "COLLABROOM", "data":{ type: "ACCEPT_COMMIT", newRev: r }});
       } else {
+        // 非该变更的作者
         let forWire = Changeset.prepareForWire(revChangeset, pad.pool);
         let wireMsg = {"type": "COLLABROOM",
                        "data": { type:"NEW_CHANGES",
