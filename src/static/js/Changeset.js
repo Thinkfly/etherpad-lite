@@ -1050,8 +1050,8 @@ exports.applyZip = function (in1, idx1, in2, idx2, func) {
     // 如果op2.opcode是空，并且iter2有值，则将iter2的值赋值给op2
     if ((!op2.opcode) && iter2.hasNext()) iter2.next(op2);
 
-    console.log("Changeset.js - applyZip - op1 : " + JSON.stringify(op1))
-    console.log("Changeset.js - applyZip - op2 : " + JSON.stringify(op2))
+    // console.log("Changeset.js - applyZip - op1 : " + JSON.stringify(op1))
+    // console.log("Changeset.js - applyZip - op2 : " + JSON.stringify(op2))
 
     // op1 : {"opcode":"+","chars":415,"lines":8,"attribs":""}
     // op2 : {"opcode":"=","chars":1,"lines":0,"attribs":""}
@@ -1065,7 +1065,7 @@ exports.applyZip = function (in1, idx1, in2, idx2, func) {
     // 合并op1和op2, opOut是合并结果
     func(op1, op2, opOut);
 
-    console.log("Changeset.js - applyZip - opOut : " + JSON.stringify(opOut))
+    // console.log("Changeset.js - applyZip - opOut : " + JSON.stringify(opOut))
     // opOut : {"opcode":"+","chars":1,"lines":0,"attribs":""}
     // opOut : {"opcode":"+","chars":1,"lines":0,"attribs":"*0"}
     // opOut : {"opcode":"+","chars":414,"lines":8,"attribs":""}
@@ -1080,7 +1080,7 @@ exports.applyZip = function (in1, idx1, in2, idx2, func) {
   }
   assem.endDocument();
 
-  console.log("Changeset.js - applyZip - assem.toString() : " + JSON.stringify(assem.toString()));
+  // console.log("Changeset.js - applyZip - assem.toString() : " + JSON.stringify(assem.toString()));
   // +1*0+1|8+bi
 
   return assem.toString();

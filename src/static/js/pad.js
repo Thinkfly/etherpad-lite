@@ -373,6 +373,7 @@ $.extend($.gritter.options, {
 var pad = {
   // don't access these directly from outside this file, except
   // for debugging
+  // 除非调试，否则不要直接从外部访问这个文件
   collabClient: null,
   myUserInfo: null,
   diagnosticInfo: {},
@@ -381,6 +382,7 @@ var pad = {
   padOptions: {},
 
   // these don't require init; clientVars should all go through here
+  // 这些不需要初始化，将由clientVars带来这里
   getPadId: function()
   {
     return clientVars.padId;
