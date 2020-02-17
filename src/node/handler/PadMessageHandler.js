@@ -247,7 +247,7 @@ exports.handleMessage = async function(client, message)
       if (thisSession.readonly) {
         messageLogger.warn("Dropped message, COLLABROOM for readonly pad");
       } else if (message.data.type == "USER_CHANGES") {
-
+        // 用户修改文档
         // 请求样例：{"type":"COLLABROOM","component":"pad","data":{"type":"USER_CHANGES","baseRev":0,"changeset":"Z:bj>1*0+1$1","apool":{"numToAttrib":{"0":["author","a.F3wABRpxZB8PVCGP"]},"nextNum":1}}}
 
         stats.counter('pendingEdits').inc()
@@ -581,7 +581,8 @@ function handleUserInfoUpdate(client, message)
  * @param client the client that send this message
  * @param message the message from the client
  */
-async function handleUserChanges(data)
+async function
+handleUserChanges(data)
 {
   var client = data.client
     , message = data.message
@@ -708,6 +709,13 @@ async function handleUserChanges(data)
     let apool = pad.pool;
     let r = baseRev;
 
+    // console.log("PadMessageHandler.js - handleUserChanges - baseRev : " + baseRev);
+    // 0
+    // console.log("PadMessageHandler.js - handleUserChanges - pad.getHeadRevisionNumber() : " + pad.getHeadRevisionNumber());
+    // 1
+    // console.log("PadMessageHandler.js - handleUserChanges - apool : " + JSON.stringify(apool));
+    // {"numToAttrib":{"0":["author","a.AVZ0RDPAmWKEfSfD"],"1":["author","a.F3wABRpxZB8PVCGP"]},"attribToNum":{"author,a.AVZ0RDPAmWKEfSfD":0,"author,a.F3wABRpxZB8PVCGP":1},"nextNum":2}
+
     // The client's changeset might not be based on the latest revision,
     // since other clients are sending changes at the same time.
     // Update the changeset so that it can be applied to the latest revision.
@@ -737,7 +745,18 @@ async function handleUserChanges(data)
           throw new Error("Won't apply USER_CHANGES, because it contains an already accepted changeset");
         }
 
+        // console.log("PadMessageHandler.js - handleUserChanges - r : " + r);
+        // 1
+        // console.log("PadMessageHandler.js - handleUserChanges - c : " + JSON.stringify(c));
+        // Z:bj>1*0+1$1
+        // console.log("PadMessageHandler.js - handleUserChanges - changeset - before : " + JSON.stringify(changeset));
+        // Z:bj>1*1+1$2
+
         changeset = Changeset.follow(c, changeset, false, apool);
+
+        // console.log("PadMessageHandler.js - handleUserChanges - changeset - after : " + JSON.stringify(changeset));
+        // Z:bk>1=1*1+1$2
+
       } catch(e) {
         client.json.send({disconnect:"badChangeset"});
         stats.meter('failedChangesets').mark();
@@ -851,6 +870,7 @@ exports.updatePadClients = async function(pad)
                                  timeDelta: currentTime - sessioninfos[sid].time
                                }};
 
+        // 注释以下代码，可以测试OT，暂时不发送变更给其他客户端
         client.json.send(wireMsg);
       }
 

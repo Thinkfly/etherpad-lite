@@ -1683,6 +1683,7 @@ exports.compose = function (cs1, cs2, pool) {
  * returns a function that tests if a string of attributes
  * (e.g. *3*4) contains a given attribute key,value that
  * is already present in the pool.
+ * 返回一个函数，用于测试一个字符串属性如（*3*4）包含一个给定的key，value，已经存在于pool中
  * @param attribPair array [key,value] of the attribute
  * @param pool {AttribPool} Attribute pool
  */
@@ -1691,10 +1692,12 @@ exports.attributeTester = function (attribPair, pool) {
     return never;
   }
   var attribNum = pool.putAttrib(attribPair, true);
+  console.log("attributeTester - attribNum : " + JSON.stringify(attribNum));
   if (attribNum < 0) {
     return never;
   } else {
     var re = new RegExp('\\*' + exports.numToString(attribNum) + '(?!\\w)');
+    console.log("attributeTester - re : " + JSON.stringify(re));
     return function (attribs) {
       return re.test(attribs);
     };
@@ -2363,6 +2366,9 @@ exports.inverse = function (cs, lines, alines, pool) {
 
 // %CLIENT FILE ENDS HERE%
 exports.follow = function (cs1, cs2, reverseInsertOrder, pool) {
+
+  // pool = {"numToAttrib":{"0":["author","a.AVZ0RDPAmWKEfSfD"],"1":["author","a.F3wABRpxZB8PVCGP"]},"attribToNum":{"author,a.AVZ0RDPAmWKEfSfD":0,"author,a.F3wABRpxZB8PVCGP":1},"nextNum":2}
+
   var unpacked1 = exports.unpack(cs1);
   var unpacked2 = exports.unpack(cs2);
   var len1 = unpacked1.oldLen;
@@ -2371,61 +2377,98 @@ exports.follow = function (cs1, cs2, reverseInsertOrder, pool) {
   var chars1 = exports.stringIterator(unpacked1.charBank);
   var chars2 = exports.stringIterator(unpacked2.charBank);
 
+  // 将老长度置为cs1的长度，因为cs1已经执行了，所以长度应该是正确的
   var oldLen = unpacked1.newLen;
   var oldPos = 0;
   var newLen = 0;
 
-  console.log("Changeset.js - follow - unpacked1 : " + JSON.stringify(unpacked1));
-  console.log("Changeset.js - follow - unpacked2 : " + JSON.stringify(unpacked2));
-  console.log("Changeset.js - follow - oldLen : " + JSON.stringify(oldLen));
+  // console.log("Changeset.js - follow - unpacked1 : " + JSON.stringify(unpacked1));
+  // unpacked1 = {"oldLen":415,"newLen":416,"ops":"*0+1","charBank":"1"}
+  // console.log("Changeset.js - follow - unpacked2 : " + JSON.stringify(unpacked2));
+  // unpacked2 = {"oldLen":415,"newLen":416,"ops":"*1+1","charBank":"2"}
+  // console.log("Changeset.js - follow - oldLen : " + JSON.stringify(oldLen));
+  // oldLen = 416
 
+  // 检查是否包含2个属性，此方法如果没有那两个属性，则返回false
   var hasInsertFirst = exports.attributeTester(['insertorder', 'first'], pool);
 
   var newOps = exports.applyZip(unpacked1.ops, 0, unpacked2.ops, 0, function (op1, op2, opOut) {
     if (op1.opcode == '+' || op2.opcode == '+') {
+      // 如果op1是插入或者op2是插入
       var whichToDo;
       if (op2.opcode != '+') {
+        // 如果op2不是插入，则先做op1
         whichToDo = 1;
       } else if (op1.opcode != '+') {
+        // 如果op1不是插入，则先做op2
         whichToDo = 2;
       } else {
+        // 如果都是op1，op2都是插入
         // both +
         var firstChar1 = chars1.peek(1);
+        // console.log("Changeset.js - follow - firstChar1 : " + JSON.stringify(firstChar1));
+        // firstChar1 : "1"
         var firstChar2 = chars2.peek(1);
+        // console.log("Changeset.js - follow - firstChar2 : " + JSON.stringify(firstChar2));
+        // firstChar2 : "2"
+        // console.log("Changeset.js - follow - op1.attribs : " + JSON.stringify(op1.attribs));
+        // op1.attribs : "*0"
         var insertFirst1 = hasInsertFirst(op1.attribs);
+        // console.log("Changeset.js - follow - insertFirst1 : " + JSON.stringify(insertFirst1));
+        // insertFirst1 : false
+        // console.log("Changeset.js - follow - op2.attribs : " + JSON.stringify(op2.attribs));
+        // op2.attribs : "*1"
         var insertFirst2 = hasInsertFirst(op2.attribs);
+        // console.log("Changeset.js - follow - insertFirst2 : " + JSON.stringify(insertFirst2));
+        // insertFirst2 : false
         if (insertFirst1 && !insertFirst2) {
+          // op1包含那两个属性，op2不包含，则做op1
           whichToDo = 1;
         } else if (insertFirst2 && !insertFirst1) {
+          // op2包含那两个属性，op1不包含，则做op2
           whichToDo = 2;
         }
         // insert string that doesn't start with a newline first so as not to break up lines
+        // 插入的字符串没有以换行符开头，则不用换行
         else if (firstChar1 == '\n' && firstChar2 != '\n') {
+          // op1以换行符开头，op2不以换行开头，则做op2
           whichToDo = 2;
         } else if (firstChar1 != '\n' && firstChar2 == '\n') {
+          // op2以换行符开头，op1不以换行开头，则做op1
           whichToDo = 1;
         }
         // break symmetry:
         else if (reverseInsertOrder) {
+          // 反向插入顺序，则做op2
           whichToDo = 2;
         } else {
+          // 其他情况都做op1
           whichToDo = 1;
         }
       }
       if (whichToDo == 1) {
+        // 执行op1
+        // 跳过op1个字符
         chars1.skip(op1.chars);
+        // 将opOut置为保持，保持的数量为op1的行数和op1的字符数
         opOut.opcode = '=';
         opOut.lines = op1.lines;
         opOut.chars = op1.chars;
         opOut.attribs = '';
+        // op1置空
         op1.opcode = '';
       } else {
+        // 执行op2
         // whichToDo == 2
+        // 跳过op2个字符
+        // 把op2复制到opOut
+        // 将op2置空
         chars2.skip(op2.chars);
         exports.copyOp(op2, opOut);
         op2.opcode = '';
       }
-    } else if (op1.opcode == '-') {
+    }
+    else if (op1.opcode == '-') {
       if (!op2.opcode) {
         op1.opcode = '';
       } else {
@@ -2442,7 +2485,8 @@ exports.follow = function (cs1, cs2, reverseInsertOrder, pool) {
           op2.opcode = '';
         }
       }
-    } else if (op2.opcode == '-') {
+    }
+    else if (op2.opcode == '-') {
       exports.copyOp(op2, opOut);
       if (!op1.opcode) {
         op2.opcode = '';
@@ -2462,15 +2506,18 @@ exports.follow = function (cs1, cs2, reverseInsertOrder, pool) {
         op2.chars -= op1.chars;
         op1.opcode = '';
       }
-    } else if (!op1.opcode) {
+    }
+    else if (!op1.opcode) {
       exports.copyOp(op2, opOut);
       op2.opcode = '';
-    } else if (!op2.opcode) {
+    }
+    else if (!op2.opcode) {
       // @NOTE: Critical bugfix for EPL issue #1625. We do not copy op1 here
       // in order to prevent attributes from leaking into result changesets.
       // exports.copyOp(op1, opOut);
       op1.opcode = '';
-    } else {
+    }
+    else {
       // both keeps
       opOut.opcode = '=';
       opOut.attribs = exports.followAttributes(op1.attribs, op2.attribs, pool);
@@ -2491,6 +2538,8 @@ exports.follow = function (cs1, cs2, reverseInsertOrder, pool) {
         op2.opcode = '';
       }
     }
+
+
     switch (opOut.opcode) {
     case '=':
       oldPos += opOut.chars;
